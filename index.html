@@ -1,17 +1,26 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>prueba_biblioteca</title>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Biblioteca</title>
+</head>
+<body>
 
+<button onclick="crearBoton()">Crear nueva etiqueta</button>
 
+<div id="contenedor"></div>
 
-    <h1> hola mundo </h1>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+<script>
+async function cargarBotones() {
+  const res = await fetch("http://localhost:3000/botones");
+  const data = await res.json();
+
+  const contenedor = document.getElementById("contenedor");
+  contenedor.innerHTML = "";
+
+  data.forEach(btn => {
+    const b = document.createElement("button");
+    b.innerHTML = `<img src="${btn.icono}" width="40"><br>${btn.texto}`;
+    contenedor.appendChild(b);
+  });
+}
