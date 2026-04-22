@@ -1,0 +1,40 @@
+/* components/editor/TextEditor.module.css */
+
+.editorWrap {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #dddbd6;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.editorWrap:focus-within {
+  border-color: #611232;
+}
+
+/* El área editable */
+.editor {
+  min-height: 90px;
+  padding: 10px 13px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  color: #1a1a1a;
+  background: #fff;
+  outline: none;
+  word-break: break-word;
+}
+
+/* Placeholder cuando está vacío */
+.editor:empty::before {
+  content: attr(data-placeholder);
+  color: #bbb;
+  pointer-events: none;
+}
+
+/* Estilos de alineación aplicados via inline style (más confiable en contentEditable) */
+
+/* Línea divisora antes del StyleSelector */
+.editorWrap > div:last-child {
+  border-top: 1.5px solid #ebebea;
+}
