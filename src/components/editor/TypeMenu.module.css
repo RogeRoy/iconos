@@ -6,7 +6,7 @@
 .grupoHeader { width:100%; display:flex; align-items:center; gap:10px; padding:11px 14px; background:#fff; border:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:700; color:#3a3a3a; text-align:left; transition:background .13s; }
 .grupoHeader:hover { background:#f8f7f4; }
 .grupoHeaderAbierto { background:#f8eff3; color:#611232; }
-.grupoIcono { font-size:16px; font-weight:700; font-family:'Courier New',monospace; width:24px; flex-shrink:0; text-align:center; }
+.grupoIcono { font-size:16px; width:24px; flex-shrink:0; text-align:center; }
 .grupoNombre { flex:1; }
 .grupoFlecha { font-size:11px; color:#aaa; transition:transform .2s; flex-shrink:0; }
 .grupoFlechaAbierto { transform:rotate(90deg); color:#611232; }
@@ -14,8 +14,7 @@
 .tiposBtns { display:flex; flex-direction:column; gap:6px; }
 .tipoBtn { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1.5px solid #e8e8e8; border-radius:8px; background:#fff; cursor:pointer; font-family:inherit; text-align:left; transition:all .13s; width:100%; }
 .tipoBtn:hover { background:#f8eff3; border-color:#e0bfc8; transform:translateX(2px); }
-.tipoBtn:active { background:#fde8ef; }
 .tipoBtnIcono { width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .tipoBtnTexto { display:flex; flex-direction:column; gap:2px; }
-.tipoBtnTexto strong { font-size:14px; font-weight:700; color:#1a1a1a; line-height:1.3; }
-.tipoBtnTexto span { font-size:12px; color:#777; line-height:1.3; }
+.tipoBtnTexto strong { font-size:14px; font-weight:700; color:#1a1a1a; }
+.tipoBtnTexto span { font-size:12px; color:#777; }

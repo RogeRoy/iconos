@@ -1,12 +1,17 @@
 .seccionCard { background:#fff; border:2.5px solid #e0bfc8; border-radius:12px; overflow:hidden; box-shadow:0 3px 12px rgba(97,18,50,.08); transition:box-shadow .2s; }
 .seccionCard:hover { box-shadow:0 5px 18px rgba(97,18,50,.13); }
-.seccionHead { display:flex; align-items:center; gap:10px; padding:11px 15px; background:linear-gradient(135deg,#f8eff3,#fde8ef); border-bottom:1.5px solid #e0bfc8; cursor:pointer; user-select:none; }
-.seccionHead:hover { background:linear-gradient(135deg,#fde8ef,#f8d0da); }
-.seccionNum { font-size:11px; font-weight:700; font-family:'Courier New',monospace; background:#611232; color:#fff; padding:2px 10px; border-radius:100px; flex-shrink:0; letter-spacing:.05em; }
-.seccionNombre { font-size:14px; font-weight:700; flex:1; color:#611232; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.seccionArrow { font-size:14px; color:#9b2247; }
-.btnEliminarSeccion { background:none; border:1.5px solid #f0c0c0; border-radius:6px; color:#a32d2d; cursor:pointer; padding:4px 7px; font-size:14px; transition:all .12s; flex-shrink:0; }
-.btnEliminarSeccion:hover { background:#fdf0f0; }
+.seccionHead { display:flex; align-items:center; gap:8px; padding:11px 15px; background:linear-gradient(135deg,#611232,#9b2247); cursor:pointer; user-select:none; }
+.seccionHead:hover { filter:brightness(1.08); }
+.seccionNum { font-size:11px; font-weight:700; font-family:'Courier New',monospace; background:rgba(255,255,255,.2); color:#fff; padding:2px 9px; border-radius:100px; flex-shrink:0; }
+.seccionNombre { font-size:14px; font-weight:700; flex:1; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.seccionArrow { font-size:14px; color:rgba(255,255,255,.85); flex-shrink:0; }
+.seccionActions { display:flex; gap:4px; flex-shrink:0; }
+/* Botones sección — fondo semi-opaco blanco sobre guinda, letras blancas bien visibles */
+.bicoSecBtn { background:rgba(255,255,255,.18); border:2px solid rgba(255,255,255,.6); border-radius:5px; color:#fff; cursor:pointer; padding:4px 10px; font-size:14px; font-weight:900; font-family:inherit; transition:all .12s; min-width:30px; line-height:1; }
+.bicoSecBtn:hover:not(:disabled) { background:rgba(255,255,255,.38); border-color:#fff; }
+.bicoSecBtn:disabled { opacity:.28; cursor:default; }
+.bicoSecDanger { border-color:rgba(255,180,180,.7); color:#ffcece; }
+.bicoSecDanger:hover:not(:disabled) { background:rgba(180,30,30,.45) !important; }
 .seccionBody { padding:15px; display:flex; flex-direction:column; gap:12px; }
 .campo { display:flex; flex-direction:column; gap:5px; }
 .campo label { font-size:13px; font-weight:700; color:#3a3a3a; }
@@ -14,25 +19,21 @@
 .campo input:focus { outline:none; border-color:#611232; }
 .labelHint { font-size:11px; color:#999; font-weight:400; }
 .inputMono { font-family:'Courier New',monospace !important; font-size:13px !important; background:#f8f7f4 !important; }
-.cssPreview { display:flex; flex-wrap:wrap; gap:5px; margin-top:3px; }
-.cssTag { font-size:11px; font-family:'Courier New',monospace; background:#611232; color:#e6d194; padding:2px 8px; border-radius:100px; letter-spacing:.04em; }
-.elementosLista { display:flex; flex-direction:column; gap:9px; }
+.cssPreview { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
+.cssTag { font-size:10px; font-family:'Courier New',monospace; background:#611232; color:#e6d194; padding:2px 7px; border-radius:100px; }
+.elementosLista { display:flex; flex-direction:column; gap:8px; }
 .listaVacia { font-size:13px; color:#999; font-style:italic; text-align:center; padding:14px; border:1.5px dashed #dddbd6; border-radius:8px; background:#f8f7f4; margin:0; }
 .elementoCard { border:1.5px solid #dddbd6; border-radius:8px; overflow:hidden; background:#fff; transition:box-shadow .15s; }
 .elementoCard:hover { box-shadow:0 2px 8px rgba(0,0,0,.08); }
-.elementoHead { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#f5f5f5; border-bottom:1px solid #ebebea; }
+.elementoHead { display:flex; align-items:center; gap:8px; padding:7px 10px; background:#f5f5f5; border-bottom:1px solid #ebebea; cursor:pointer; user-select:none; }
+.elementoHead:hover { background:#efefef; }
 .elementoBody { padding:0; }
-.chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; font-family:'Courier New',monospace; padding:2px 10px; border-radius:100px; flex-shrink:0; }
-.chipTitulo { background:#611232; color:#fff; }
-.chipParrafo { background:#eaf5f2; color:#1e5b4f; }
-.chipT { font-family:Georgia,'Times New Roman',serif; font-size:14px; font-weight:900; line-height:1; }
-.btnEliminar { margin-left:auto; background:none; border:1.5px solid #f0c0c0; border-radius:5px; color:#a32d2d; cursor:pointer; padding:2px 7px; font-size:12px; font-weight:700; transition:all .12s; }
-.btnEliminar:hover { background:#fdf0f0; }
-.botonesAgregar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:9px 12px; background:linear-gradient(135deg,#f8eff3,#fff0f5); border:1.5px solid #e0bfc8; border-radius:8px; }
-.botonesLabel { font-size:12px; color:#777; font-weight:700; }
-.btnAgregarTitulo, .btnAgregarParrafo { display:inline-flex; align-items:center; gap:5px; padding:7px 15px; border-radius:8px; border:none; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
-.btnAgregarTitulo { background:#611232; color:#fff; box-shadow:0 2px 6px rgba(97,18,50,.25); }
-.btnAgregarTitulo:hover { background:#4d0d27; transform:translateY(-1px); }
-.btnAgregarParrafo { background:#1e5b4f; color:#fff; box-shadow:0 2px 6px rgba(30,91,79,.25); }
-.btnAgregarParrafo:hover { background:#002f2a; transform:translateY(-1px); }
-.btnTIcon { font-family:Georgia,'Times New Roman',serif; font-size:20px; font-weight:900; line-height:1; }
+.chip { display:inline-flex; align-items:center; font-size:11px; font-weight:700; font-family:'Courier New',monospace; padding:3px 10px; border-radius:100px; flex-shrink:0; }
+.elemActions { display:flex; gap:3px; margin-left:auto; flex-shrink:0; }
+/* Botones elemento — sobre fondo claro #f5f5f5, color oscuro con borde visible */
+.bicoBtn { background:#e8e8e6; border:1.5px solid #c0c0be; border-radius:5px; color:#333; cursor:pointer; padding:3px 9px; font-size:13px; font-weight:900; font-family:inherit; transition:all .12s; min-width:27px; line-height:1; }
+.bicoBtn:hover:not(:disabled) { background:#d4d4d2; border-color:#888; color:#111; }
+.bicoBtn:disabled { opacity:.3; cursor:default; }
+.bicoDanger { border-color:#e8a0a0; color:#8b2020; background:#fdf3f3; }
+.bicoDanger:hover:not(:disabled) { background:#fce0e0 !important; border-color:#c06060 !important; }
+.elemArrow { font-size:12px; color:#888; flex-shrink:0; }
