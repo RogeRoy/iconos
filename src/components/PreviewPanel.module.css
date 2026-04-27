@@ -1,0 +1,101 @@
+/* PreviewPanel.module.css */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  border-left: 2px solid #e0bfc8;
+  box-shadow: -4px 0 20px rgba(0,0,0,.07);
+  overflow: hidden;
+}
+
+/* ── Topbar del preview ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #161a1d;
+  border-bottom: 2px solid #611232;
+  flex-shrink: 0;
+}
+
+.headerTitulo {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: rgba(255,255,255,.7);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.headerBadge {
+  font-size: 9px;
+  font-family: 'Courier New', monospace;
+  padding: 2px 9px;
+  border-radius: 100px;
+  background: #a57f2c;
+  color: #161a1d;
+  font-weight: 900;
+  animation: pulse-badge 2s ease-in-out infinite;
+  letter-spacing: .05em;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .6; }
+}
+
+.headerHint {
+  font-size: 10px;
+  color: rgba(255,255,255,.3);
+  margin-left: auto;
+  font-style: italic;
+}
+
+/* ── Cuerpo scrolleable ── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.body::-webkit-scrollbar { width: 5px; }
+.body::-webkit-scrollbar-track { background: #f5f5f5; }
+.body::-webkit-scrollbar-thumb { background: #d0b090; border-radius: 10px; }
+
+/* ── Segmento en el preview ── */
+.pvSeg {
+  padding: 14px 0;
+  border-bottom: 1px dashed #ede8e0;
+}
+.pvSeg:last-child { border-bottom: none; }
+
+/* ── Columna dentro de un segmento multi-col ── */
+.pvCol {
+  padding: 0 4px;
+  border-right: 1px dashed #ede8e0;
+}
+.pvCol:last-child { border-right: none; }
+
+/* ── Placeholder de imagen sin preview ── */
+.pvImgPlaceholder {
+  background: #f5e8d0;
+  border: 1.5px dashed #c9a76c;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  color: #7b5800;
+  text-align: center;
+}
+
+/* ── Estado vacío ── */
+.vacio {
+  text-align: center;
+  padding: 60px 20px;
+  color: #bbb;
+}
+.vacioIco { font-size: 48px; margin-bottom: 12px; }
+.vacio p  { font-size: 14px; color: #aaa; margin: 0 0 6px; }
+.vacio small { font-size: 12px; color: #ccc; }

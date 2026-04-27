@@ -1,0 +1,160 @@
+/* Subsegment.module.css — Columna dentro de un segmento multi-columna */
+
+.subCard {
+  border: 2px solid #7aa899;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #edf5f1;
+  margin-bottom: 8px;
+}
+
+/* ── Cabecera ── */
+.subHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #d6ede5, #c3e4d6);
+  border-bottom: 1px solid #7aa899;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.subHead:hover { background: linear-gradient(135deg, #c3e4d6, #aad4c5); }
+
+.subNum {
+  font-size: 10px; font-weight: 700;
+  font-family: 'Courier New', monospace;
+  background: #1e5b4f; color: #fff;
+  padding: 2px 8px; border-radius: 100px;
+  flex-shrink: 0; letter-spacing: .05em;
+}
+
+.subNombre {
+  font-size: 13px; font-weight: 700;
+  color: #1e5b4f; flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.subCount {
+  font-size: 10px; font-weight: 700;
+  background: #c3e4d6; color: #1e5b4f;
+  padding: 2px 7px; border-radius: 10px; flex-shrink: 0;
+}
+
+.subActions {
+  display: flex; gap: 3px; align-items: center; flex-shrink: 0;
+}
+
+.subArrow {
+  font-size: 12px; color: #1e5b4f; flex-shrink: 0; margin-left: 2px;
+}
+
+/* ── Cuerpo ── */
+.subBody {
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* ── Botones de acción ── */
+.bico {
+  background: transparent;
+  border: 1px solid #7aa899;
+  color: #1e5b4f;
+  border-radius: 4px;
+  width: 24px; height: 24px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.bico:hover:not(:disabled) { background: #d6ede5; }
+.bico:disabled { opacity: 0.3; cursor: default; }
+.bicoDanger { border-color: #e57373; color: #b71c1c; }
+.bicoDanger:hover:not(:disabled) { background: #fde8e8; }
+
+/* ── Campo de texto ── */
+.campo {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.campo label {
+  font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.campo input {
+  padding: 7px 10px;
+  border: 2px solid #a8d4c5;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.campo input:focus { border-color: #1e5b4f; }
+
+/* ── Lista vacía ── */
+.listaVacia {
+  text-align: center; color: #aaa;
+  font-size: 12px; font-style: italic;
+  padding: 10px 0;
+}
+
+/* ── Elemento card ── */
+.elemCard {
+  border: 1.5px solid #c0d8d0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.elemHead {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 10px;
+  background: #f0f8f5;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid #e0ede8;
+}
+.elemHead:hover { background: #e4f3ee; }
+
+.chip {
+  font-size: 10px; font-weight: 700;
+  color: #fff; padding: 2px 7px;
+  border-radius: 100px; flex-shrink: 0;
+  font-family: 'Courier New', monospace;
+  letter-spacing: .04em;
+}
+
+.elemResumen {
+  font-size: 11px; color: #666;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 220px; flex: 1;
+}
+
+.elemActions {
+  display: flex; gap: 3px; align-items: center; flex-shrink: 0; margin-left: auto;
+}
+
+.elemArrow { font-size: 11px; color: #1e5b4f; flex-shrink: 0; }
+
+.elemBody { padding: 0; }
+.elemLista { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Mini preview ── */
+.prevWrap {
+  padding: 8px 12px 10px;
+  border-top: 1px dashed #c0d8d0;
+}
+.prevLbl {
+  font-size: 10px; font-weight: 700; color: #1e5b4f;
+  text-transform: uppercase; letter-spacing: .05em;
+  display: block; margin-bottom: 5px;
+}
+.prevBox {
+  background: #fafafa; border-radius: 5px;
+  padding: 8px 12px; min-height: 24px;
+  font-family: 'Noto Sans', sans-serif; font-size: 13px;
+}

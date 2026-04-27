@@ -1,13 +1,41 @@
-// App.jsx — Punto de entrada de la aplicación
-// Este componente "raíz" simplemente renderiza BuilderPanel
-import BuilderPanel from './components/BuilderPanel'
+import { useState, useCallback } from 'react'
+import BuilderPanel   from './components/BuilderPanel'
+import PreviewPanel   from './components/PreviewPanel'
+import ErrorBoundary  from './components/ErrorBoundary'
+import './App.css'
 
-function App() {
+export default function App() {
+  const [secciones,       setSecciones]       = useState([])
+  const [activeSectionId, setActiveSectionId] = useState(null)
+
+  const handleNavegar = useCallback(({ tipo, id, secId }) => {
+    if (tipo === 'seccion') {
+      setActiveSectionId(id)
+    } else if (tipo === 'subsegmento') {
+      setActiveSectionId(secId)
+    }
+  }, [])
+
   return (
-    <div>
-      <BuilderPanel />
+    <div className="app-layout">
+      <div className="app-builder">
+        <ErrorBoundary>
+          <BuilderPanel
+            seccionesExternas={secciones}
+            onSeccionesChange={setSecciones}
+            activeSectionIdExterno={activeSectionId}
+            onActiveSectionChange={setActiveSectionId}
+          />
+        </ErrorBoundary>
+      </div>
+      <div className="app-preview">
+        <ErrorBoundary>
+          <PreviewPanel
+            secciones={secciones}
+            onNavegar={handleNavegar}
+          />
+        </ErrorBoundary>
+      </div>
     </div>
   )
 }
-
-export default App

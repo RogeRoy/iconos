@@ -12,7 +12,7 @@ export default function CaseButtons({ onCase }) {
     <>
       {CASE_BTNS.map(({ cmd, label, title }) => (
         <button key={cmd} className={`${styles.toolBtn} ${styles.caseBtn}`} title={title}
-          onMouseDown={(e) => { e.preventDefault(); onCase(cmd) }}>
+          onMouseDown={(e) => { e.preventDefault(); onCase && onCase(cmd) }}>
           {label}
         </button>
       ))}

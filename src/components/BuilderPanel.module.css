@@ -197,3 +197,43 @@
   max-height: 500px;
   overflow-y: auto;
 }
+
+/* ── Alertas de API ── */
+.alertaError { display:flex; align-items:center; gap:10px; padding:11px 14px; background:#fdf0f0; border:1.5px solid #e8a0a0; border-radius:8px; font-size:13px; color:#8b2020; }
+.alertaExito { display:flex; align-items:center; gap:10px; padding:11px 14px; background:#eaf5f2; border:1.5px solid #8ecfb4; border-radius:8px; font-size:13px; color:#1e5b4f; }
+.alertaCerrar { margin-left:auto; background:none; border:none; cursor:pointer; font-size:14px; color:inherit; opacity:.7; flex-shrink:0; }
+.alertaCerrar:hover { opacity:1; }
+.btnGuardandoActivo { opacity:.75; cursor:wait !important; }
+
+/* ── Nuevos estilos v2 ── */
+.topbarActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btnDescargar {
+  background: #1e5b4f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.btnDescargar:hover { background: #002f2a; }
+
+.btnDescargarJson {
+  background: #1e5b4f;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.btnDescargarJson:hover { background: #002f2a; }

@@ -1,21 +1,75 @@
-.styleRow { display:grid; grid-template-columns:170px 1fr; gap:8px; padding:9px 10px; background:#f8f7f4; border-top:1.5px solid #ebebea; }
-.selectorWrap { display:flex; flex-direction:column; gap:4px; }
-.selectorLabel { font-size:10px; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:.05em; }
-.select { padding:6px 9px; border:2px solid #dddbd6; border-radius:6px; font-size:12px; font-family:inherit; background:#fff; color:#1a1a1a; cursor:pointer; width:100%; }
-.select:focus { outline:none; border-color:#611232; }
-.previewWrap { display:flex; flex-direction:column; gap:4px; }
-.previewLabel { font-size:10px; font-weight:700; color:#777; text-transform:uppercase; letter-spacing:.05em; }
-/* Padding-left generoso para que viñetas y numeración no se recorten */
-.previewBox {
-  min-height:32px;
-  padding:7px 11px 7px 28px;   /* ← left padding amplio para bullets/números */
-  background:#fff;
-  border:1.5px solid #dddbd6;
-  border-radius:6px;
-  font-size:13px;
-  line-height:1.5;
-  color:#1a1a1a;
-  word-break:break-word;
-  overflow:auto;
+/* components/editor/StyleSelector.module.css */
+
+.styleRow {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 9px 10px;
+  background: #f8f7f4;
+  border: 1.5px solid #ebebea;
+  border-radius: 8px;
 }
-.previewVacio { color:#bbb; font-style:italic; font-size:11px; }
+
+.selectorWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selectorLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.select {
+  padding: 7px 10px;
+  border: 2px solid #dddbd6;
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.select:focus {
+  outline: none;
+  border-color: #611232;
+}
+
+.previewWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.previewLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.previewBox {
+  min-height: 36px;
+  padding: 7px 11px;
+  background: #fff;
+  border: 1.5px solid #dddbd6;
+  border-radius: 7px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1a1a;
+  transition: font-family 0.1s;
+  word-break: break-word;
+}
+
+.previewVacio {
+  color: #bbb;
+  font-style: italic;
+  font-size: 12px;
+}

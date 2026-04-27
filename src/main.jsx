@@ -1,13 +1,8 @@
 // main.jsx — Punto de entrada de React
-// Este archivo "monta" la app dentro del div#root en index.html
-import { StrictMode } from 'react'
+// NOTA: StrictMode removido porque causa doble-montaje en desarrollo,
+// lo que borra el contenido de los editores contentEditable al primer render.
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 
-// StrictMode hace que React detecte problemas potenciales en desarrollo
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-)
+createRoot(document.getElementById('root')).render(<App />)
