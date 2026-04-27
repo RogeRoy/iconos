@@ -1,33 +1,55 @@
-// useGuardarBoletin.js — v2
-// Integra encodeHtml + guardarImagen con nombre document-image-{id}-{n}.ext
+// useGuardarBoletin.js — v4
+// Usa devLog para que los logs aparezcan en browser Y terminal npm.
 import { useState, useCallback } from 'react'
 import { guardarBoletin, actualizarBoletin, guardarImagen, generarNombreImagen } from '../services/api'
 import { encodeHtml, sanitizePlain } from '../utils/htmlTokens'
+import { buildCss, encodeCssToIndex } from '../utils/cssTokens'
+import { devLog, devLogGroup, devSeparator } from '../utils/devLog'
 
-// ── Aplica tokenización al JSON antes de enviarlo a la BD ─
-// Recorre bulletin_sections y codifica section_content según el tipo.
-// Títulos (h1/h2/h3): texto plano puro.
-// Elementos ricos (p, ul, ol, hl, note): tokens HTML.
-// Resto: sin cambios.
-function tokenizarJson(flatJson) {
-  const RICH_TYPES = ['p', 'ul', 'ol', 'ul-ol', 'hl', 'note']
-  const PLAIN_TYPES = ['h1', 'h2', 'h3']
+const RICH_TYPES  = ['p', 'ul', 'ol', 'ul-ol', 'hl', 'note']
+const PLAIN_TYPES = ['h1', 'h2', 'h3']
+
+function procesarSeccion(sec) {
+  const tipo  = sec._meta_type  || ''
+  const align = sec._meta_align || 'left'
+  const font  = ''
+
+  // ── 1. HTML: tokenizar ────────────────────────────────
+  const htmlCrudo = sec.section_html || ''
+  let   htmlToken = ''
+
+  if (PLAIN_TYPES.includes(tipo)) {
+    htmlToken = sanitizePlain(htmlCrudo)
+  } else if (RICH_TYPES.includes(tipo)) {
+    htmlToken = encodeHtml(htmlCrudo)
+  } else {
+    htmlToken = htmlCrudo
+  }
+
+  // Log HTML — aparece en browser Y terminal npm
+  if (RICH_TYPES.includes(tipo) || PLAIN_TYPES.includes(tipo)) {
+    devLogGroup('TOKEN', `SEG=${sec.section_segment} SUB=${sec.section_subsegment} tipo=${tipo} orden=${sec.section_order}`, [
+      { label: 'section_html ANTES  (HTML crudo)', valor: htmlCrudo  },
+      { label: 'section_html DESPUÉS (tokens)    ', valor: htmlToken  },
+    ])
+  }
+
+  // ── 2. CSS: construir → codificar a índices ────────────
+  const cssClases  = buildCss(tipo, align, font)
+  const cssIndices = encodeCssToIndex(cssClases)
+
+  // Log CSS — aparece en browser Y terminal npm
+  devLogGroup('CSS', `SEG=${sec.section_segment} tipo=${tipo} orden=${sec.section_order}`, [
+    { label: 'section_css_temp ANTES  (clases) ', valor: cssClases  },
+    { label: 'section_css DESPUÉS (índices)     ', valor: cssIndices },
+  ])
 
   return {
-    ...flatJson,
-    bulletin_sections: flatJson.bulletin_sections.map(sec => {
-      const tipo = sec._meta_type || ''
-      let content = sec.section_content || ''
-
-      if (PLAIN_TYPES.includes(tipo)) {
-        content = sanitizePlain(content)
-      } else if (RICH_TYPES.includes(tipo)) {
-        content = encodeHtml(content)
-      }
-      // url, mail, img, hr → sin cambios (ya son texto plano)
-
-      return { ...sec, section_content: content }
-    }),
+    ...sec,
+    section_html_temp: htmlCrudo,
+    section_css_temp:  cssClases,
+    section_html:      htmlToken,
+    section_css:       cssIndices,
   }
 }
 
@@ -40,50 +62,50 @@ export function useGuardarBoletin() {
     setCargando(true); setError(null); setResultado(null)
 
     try {
-      // PASO 1: Subir imágenes con nombre document-image-{id}-{n}.ext
-      // Si el boletín ya existe, usamos su ID. Si es nuevo, usamos 'draft'.
       const baseBullId = bulletinIdExistente || 'draft'
-      const urlsSubidas = {}
-      let consecutivo = 1
+      const urlsSubidas = {}; let consecutivo = 1
 
       for (const [elemId, archivo] of Object.entries(imagenesArchivos)) {
         const nombre = generarNombreImagen(archivo, baseBullId, consecutivo)
-        console.log(`[API] Subiendo imagen ${nombre}…`)
+        devLog('IMG', `Subiendo imagen ${nombre}…`)
         try {
           const resp = await guardarImagen(archivo, baseBullId, consecutivo)
-          urlsSubidas[elemId] = resp.url
-          consecutivo++
-          console.log(`[API] ✅ ${resp.filename}`)
+          urlsSubidas[elemId] = resp.url; consecutivo++
+          devLog('IMG', `✅ Guardada: ${resp.filename}`)
         } catch {
-          // Si falla la subida, usar URL local temporal (no bloquear el guardado)
           urlsSubidas[elemId] = URL.createObjectURL(archivo)
-          console.warn(`[API] ⚠ Imagen ${nombre} no subida, usando URL local`)
+          devLog('IMG', `⚠ ${nombre} no subida — usando URL local temporal`)
         }
       }
 
-      // PASO 2: Reemplazar nombres de archivo por URLs en el JSON
       const jsonConUrls = {
         ...flatJson,
         bulletin_sections: flatJson.bulletin_sections.map(sec => {
           if (sec._meta_type === 'img' && sec.section_content) {
-            const urlNueva = Object.values(urlsSubidas).find(u =>
+            const url = Object.values(urlsSubidas).find(u =>
               u.includes(sec.section_content) || u.endsWith(sec.section_content)
             )
-            if (urlNueva) return { ...sec, section_content: urlNueva, path_desc: urlNueva }
+            if (url) return { ...sec, section_content: url, path_desc: url }
           }
           return sec
         }),
       }
 
-      // PASO 3: Tokenizar HTML antes de enviar a la BD
-      const jsonTokenizado = tokenizarJson(jsonConUrls)
+      devSeparator('TOKENIZACIÓN + CODIFICACIÓN CSS — inicio')
 
-      // PASO 4: Guardar o actualizar
+      const jsonFinal = {
+        ...jsonConUrls,
+        bulletin_sections: jsonConUrls.bulletin_sections.map(procesarSeccion),
+      }
+
+      devSeparator('JSON FINAL listo para la BD')
+      devLog('INFO', 'JSON completo', jsonFinal)
+
       let respGuardado
       if (bulletinIdExistente) {
-        respGuardado = await actualizarBoletin(bulletinIdExistente, jsonTokenizado)
+        respGuardado = await actualizarBoletin(bulletinIdExistente, jsonFinal)
       } else {
-        respGuardado = await guardarBoletin(jsonTokenizado)
+        respGuardado = await guardarBoletin(jsonFinal)
       }
 
       setResultado(respGuardado)
@@ -99,6 +121,5 @@ export function useGuardarBoletin() {
   }, [])
 
   const limpiar = useCallback(() => { setError(null); setResultado(null) }, [])
-
   return { guardar, cargando, error, resultado, limpiar }
 }

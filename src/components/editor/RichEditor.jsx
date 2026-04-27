@@ -1,7 +1,4 @@
-// RichEditor.jsx
-// Editor contentEditable reutilizable para: p, ul, ol, ul-ol, hl, note.
-// Incluye toolbar de formato (B/I/U/resaltar) + alineación + case + barra de listas (opcional).
-
+// RichEditor.jsx — fix: alineación reflejada en preview local
 import { useRef, useState, useEffect } from 'react'
 import AlignButtons  from './AlignButtons'
 import CaseButtons   from './CaseButtons'
@@ -11,29 +8,25 @@ import styles from './RichEditor.module.css'
 import tbStyles from './Toolbar.module.css'
 
 const ALIGN_CLASS = { left:'text-left', center:'text-center', right:'text-right', justify:'text-justify' }
-const FONT_FAMILY  = { 'noto-sans':'"Noto Sans", sans-serif', 'patria':'Georgia, "Times New Roman", serif' }
+const FONT_FAMILY  = { 'noto-sans':'\"Noto Sans\", sans-serif', 'patria':'Georgia, \"Times New Roman\", serif' }
 
-// Botones de lista (ul/ol/indent/outdent) — solo para tipos con hasListBar
 function ListBar({ editorRef }) {
-  const cmd = (c) => {
-    editorRef.current?.focus()
-    document.execCommand(c, false, null)
-  }
+  const cmd = (c) => { editorRef.current?.focus(); document.execCommand(c, false, null) }
   return (
     <div className={styles.listBar}>
       <span className={styles.listBarLbl}>Lista:</span>
-      <button className={tbStyles.toolBtn} title="Agregar viñeta (•)" onMouseDown={(e) => { e.preventDefault(); cmd('insertUnorderedList') }}>
+      <button className={tbStyles.toolBtn} title="Agregar viñeta (•)" onMouseDown={(e)=>{e.preventDefault();cmd('insertUnorderedList')}}>
         <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="4" cy="6" r="2" fill="#a57f2c"/><rect x="8" y="5" width="10" height="2" rx="1" fill="#888"/><circle cx="4" cy="14" r="2" fill="#a57f2c"/><rect x="8" y="13" width="10" height="2" rx="1" fill="#888"/></svg>
       </button>
-      <button className={tbStyles.toolBtn} title="Agregar número (1. 2. 3.)" onMouseDown={(e) => { e.preventDefault(); cmd('insertOrderedList') }}>
+      <button className={tbStyles.toolBtn} title="Agregar número (1. 2. 3.)" onMouseDown={(e)=>{e.preventDefault();cmd('insertOrderedList')}}>
         <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="4" cy="6" r="3" fill="#7b5800"/><text x="4" y="8.5" fontFamily="Arial" fontSize="4.5" fontWeight="700" fill="#fff" textAnchor="middle">1</text><rect x="9" y="5" width="9" height="2" rx="1" fill="#888"/><circle cx="4" cy="14" r="3" fill="#7b5800"/><text x="4" y="16.5" fontFamily="Arial" fontSize="4.5" fontWeight="700" fill="#fff" textAnchor="middle">2</text><rect x="9" y="13" width="9" height="2" rx="1" fill="#888"/></svg>
       </button>
       <div className={tbStyles.sep}/>
-      <button className={`${tbStyles.toolBtn} ${styles.listBtnAncho}`} title="Anidar: mover el punto hacia adentro para crear sub-lista" onMouseDown={(e) => { e.preventDefault(); cmd('indent') }}>
+      <button className={`${tbStyles.toolBtn} ${styles.listBtnAncho}`} title="Anidar" onMouseDown={(e)=>{e.preventDefault();cmd('indent')}}>
         <svg viewBox="0 0 14 14" fill="none" width="13" height="13"><path d="M1 4h12M5 7h8M5 10h8M1 7l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         Anidar
       </button>
-      <button className={`${tbStyles.toolBtn} ${styles.listBtnAncho}`} title="Quitar: sacar el punto de la sub-lista hacia afuera" onMouseDown={(e) => { e.preventDefault(); cmd('outdent') }}>
+      <button className={`${tbStyles.toolBtn} ${styles.listBtnAncho}`} title="Quitar" onMouseDown={(e)=>{e.preventDefault();cmd('outdent')}}>
         <svg viewBox="0 0 14 14" fill="none" width="13" height="13"><path d="M1 4h12M5 7h8M5 10h8M4 7l-3 3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         Quitar
       </button>
@@ -44,14 +37,15 @@ function ListBar({ editorRef }) {
 export default function RichEditor({
   tipo, html, align, font, cssClases,
   hasListBar = false, hasFormatBar = true, hasStyleRow = false,
-  placeholder = 'Escribe aquí...',
-  onChange,
+  placeholder = 'Escribe aquí...', onChange,
 }) {
   const editorRef = useRef(null)
   const [activeFormats, setActiveFormats] = useState({ bold:false, italic:false, underline:false, hiliteColor:false })
-  const [previewHtml, setPreviewHtml]     = useState(html || '')
 
-  // Solo al montar — NO [html] como dep para evitar borrar mientras escribe
+  // ── FIX: previewHtml incluye ahora el align para que el preview local lo refleje ──
+  const [previewHtml,   setPreviewHtml]   = useState(html || '')
+  const [previewAlign,  setPreviewAlign]  = useState(align || 'justify')
+
   useEffect(() => {
     const ed = editorRef.current
     if (ed) ed.innerHTML = html || ''
@@ -67,25 +61,23 @@ export default function RichEditor({
     const parts    = [base, fontCls, alignCls].filter(Boolean)
     const nuevoHtml = ed.innerHTML
     setPreviewHtml(nuevoHtml)
+    setPreviewAlign(alignVal)   // ← FIX: actualizar align del preview
     onChange({ html: nuevoHtml, align: alignVal, font: fontCls, cssClases: [...new Set(parts)].join(' ') })
   }
 
   const detectar = () => setActiveFormats({
-    bold: document.queryCommandState('bold'),
-    italic: document.queryCommandState('italic'),
-    underline: document.queryCommandState('underline'),
-    hiliteColor: document.queryCommandState('hiliteColor'),
+    bold:       document.queryCommandState('bold'),
+    italic:     document.queryCommandState('italic'),
+    underline:  document.queryCommandState('underline'),
+    hiliteColor:document.queryCommandState('hiliteColor'),
   })
 
   const handleFormat = (cmd, value = null) => {
-    const ed = editorRef.current
-    if (!ed) return
-    ed.focus()
+    const ed = editorRef.current; if (!ed) return; ed.focus()
     if (cmd === 'bold') {
       const sel = window.getSelection()
       if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
-        const range = sel.getRangeAt(0)
-        const b = document.createElement('b')
+        const range = sel.getRangeAt(0); const b = document.createElement('b')
         b.style.color = '#3a0a0a'
         try { range.surroundContents(b) } catch { document.execCommand('bold', false, null) }
       } else { document.execCommand('bold', false, null) }
@@ -94,9 +86,7 @@ export default function RichEditor({
   }
 
   const handleCase = (modo) => {
-    const ed = editorRef.current
-    if (!ed) return
-    ed.focus()
+    const ed = editorRef.current; if (!ed) return; ed.focus()
     const sel = window.getSelection()
     if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
       document.execCommand('insertText', false, applyCase(sel.getRangeAt(0).toString(), modo))
@@ -108,58 +98,41 @@ export default function RichEditor({
 
   return (
     <div className={styles.richWrap}>
-      {/* Barra de lista (solo ul/ol/ul-ol) */}
       {hasListBar && <ListBar editorRef={editorRef} />}
 
-      {/* Toolbar: formato + alineación + case */}
       <div className={styles.toolbar}>
         {hasFormatBar && (
           <div className={styles.grupo}>
             {[
-              { cmd:'bold',       title:'Negrita — hace el texto más grueso y oscuro',        icon:<svg viewBox="0 0 20 20" width="15" height="15"><text x="4" y="15" fontFamily="Georgia,serif" fontSize="13" fontWeight="900" fill="#3a0a0a">B</text></svg> },
-              { cmd:'italic',     title:'Cursiva — inclina el texto',                          icon:<svg viewBox="0 0 20 20" width="15" height="15"><text x="5" y="15" fontFamily="Georgia,serif" fontSize="13" fontStyle="italic" fontWeight="700" fill="currentColor">I</text></svg> },
-              { cmd:'underline',  title:'Subrayado — pone una línea debajo del texto',         icon:<svg viewBox="0 0 20 20" width="15" height="15"><text x="4" y="13" fontFamily="Arial" fontSize="12" fontWeight="700" fill="currentColor">U</text><line x1="3" y1="16" x2="15" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg> },
-              { cmd:'hiliteColor', value:'yellow', title:'Resaltar — fondo amarillo sobre el texto seleccionado',
-                extraClass: styles.btnHl,
+              { cmd:'bold',       title:'Negrita', icon:<svg viewBox="0 0 20 20" width="15" height="15"><text x="4" y="15" fontFamily="Georgia,serif" fontSize="13" fontWeight="900" fill="#3a0a0a">B</text></svg> },
+              { cmd:'italic',     title:'Cursiva', icon:<svg viewBox="0 0 20 20" width="15" height="15"><text x="5" y="15" fontFamily="Georgia,serif" fontSize="13" fontStyle="italic" fontWeight="700" fill="currentColor">I</text></svg> },
+              { cmd:'underline',  title:'Subrayado', icon:<svg viewBox="0 0 20 20" width="15" height="15"><text x="4" y="13" fontFamily="Arial" fontSize="12" fontWeight="700" fill="currentColor">U</text><line x1="3" y1="16" x2="15" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg> },
+              { cmd:'hiliteColor', value:'yellow', title:'Resaltar', extraClass:styles.btnHl,
                 icon:<svg viewBox="0 0 20 20" width="15" height="15"><rect x="3" y="11" width="14" height="5" rx="1" fill="#ffe566" opacity=".9"/><text x="4" y="13" fontFamily="Arial" fontSize="10" fontWeight="700" fill="#7b5800">Aa</text></svg> },
             ].map(({ cmd, value, title, icon, extraClass }) => (
-              <button key={cmd}
-                className={`${styles.tbtn} ${extraClass||''} ${activeFormats[cmd] ? styles.active : ''}`}
-                title={title}
-                onMouseDown={(e) => { e.preventDefault(); handleFormat(cmd, value) }}>
+              <button key={cmd} className={`${styles.tbtn} ${extraClass||''} ${activeFormats[cmd] ? styles.active : ''}`}
+                title={title} onMouseDown={(e)=>{e.preventDefault();handleFormat(cmd,value)}}>
                 {icon}
               </button>
             ))}
             <div className={styles.sep}/>
           </div>
         )}
-
-        <div className={styles.grupo}>
-          <AlignButtons align={align} onAlign={(v) => notificar({ align: v })} />
-        </div>
+        <div className={styles.grupo}><AlignButtons align={align} onAlign={(v)=>notificar({align:v})}/></div>
         <div className={styles.sep}/>
-        <div className={styles.grupo}>
-          <CaseButtons onCase={handleCase} />
-        </div>
+        <div className={styles.grupo}><CaseButtons onCase={handleCase}/></div>
       </div>
 
-      {/* Área editable */}
-      <div
-        ref={editorRef}
-        className={styles.editor}
-        style={{ textAlign: align || 'justify', fontFamily: FONT_FAMILY[font] || 'inherit', minHeight: minH }}
-        contentEditable
-        suppressContentEditableWarning
-        data-placeholder={placeholder}
-        onInput={() => { detectar(); notificar() }}
-        onKeyUp={detectar}
-        onMouseUp={detectar}
-        onFocus={detectar}
-      />
+      <div ref={editorRef} className={styles.editor}
+        style={{ textAlign:align||'justify', fontFamily:FONT_FAMILY[font]||'inherit', minHeight:minH }}
+        contentEditable suppressContentEditableWarning data-placeholder={placeholder}
+        onInput={()=>{detectar();notificar()}} onKeyUp={detectar} onMouseUp={detectar} onFocus={detectar}/>
 
-      {/* Style row solo cuando el tipo lo tiene (p, h1, h2, h3) */}
+      {/* ── FIX: preview local ahora aplica la alineación real ── */}
       {hasStyleRow && (
-        <StyleSelector font={font} onFontChange={(v) => notificar({ font: v })} previewHtml={previewHtml} />
+        <StyleSelector font={font} onFontChange={(v)=>notificar({font:v})}
+          previewHtml={previewHtml}
+          previewAlign={previewAlign} />
       )}
     </div>
   )

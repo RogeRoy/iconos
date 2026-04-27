@@ -18,7 +18,7 @@
 // 4. Scroll sincronizado: cada elemento tiene id="elemento-{id}"
 //    para que PreviewPanel pueda hacer scrollIntoView.
 // ─────────────────────────────────────────────────────────
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TypeMenu          from './editor/TypeMenu'
 import LayoutButtons     from './editor/LayoutButtons'
 import Subsegment        from './Subsegment'
@@ -146,11 +146,34 @@ function ElementoItem({ elemento, elemIndex, totalElems, isOpen, onToggle, onUpd
 // SECCIÓN
 // ─────────────────────────────────────────────────────────
 function Section({ section, sectionIndex, isOpen, onToggle, onUpdate, onDelete,
-  onMoverSec, canSecArriba, canSecAbajo, onFileSelected }) {
+  onMoverSec, canSecArriba, canSecAbajo, onFileSelected,
+  activeSubIdFromPreview,
+  activeElemIdFromPreview,
+  onElementoAbierto,
+}) {
 
   const [activeElem, setActiveElem] = useState(null)
-  // activeSub: índice del subsegmento abierto (-1 = ninguno)
-  const [activeSub, setActiveSub]   = useState(-1)
+  const [activeSub,  setActiveSub]  = useState(-1)
+
+  // preview → abrir subsegmento
+  useEffect(() => {
+    if (!activeSubIdFromPreview) return
+    const idx = (section.subsegmentos||[]).findIndex(s => s.id === activeSubIdFromPreview)
+    if (idx !== -1) setActiveSub(idx)
+  }, [activeSubIdFromPreview, section.subsegmentos])
+
+  // preview → abrir elemento individual
+  useEffect(() => {
+    if (!activeElemIdFromPreview) return
+    const idx = (section.elementos||[]).findIndex(e => e.id === activeElemIdFromPreview)
+    if (idx !== -1) {
+      setActiveElem(idx)
+      setTimeout(() => {
+        const el = document.getElementById(`elemento-${activeElemIdFromPreview}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 60)
+    }
+  }, [activeElemIdFromPreview, section.elementos])
 
   const genId    = () => `elem_${Date.now()}_${Math.floor(Math.random()*1000)}`
   const genSubId = () => `sub_${Date.now()}_${Math.floor(Math.random()*1000)}`
@@ -254,7 +277,13 @@ function Section({ section, sectionIndex, isOpen, onToggle, onUpdate, onDelete,
                       <ElementoItem key={elem.id} elemento={elem} elemIndex={idx}
                         totalElems={section.elementos.length}
                         isOpen={activeElem===idx}
-                        onToggle={()=>setActiveElem(p=>p===idx?null:idx)}
+                        onToggle={()=>{
+                          const ni = activeElem===idx ? null : idx
+                          setActiveElem(ni)
+                          if (ni !== null && onElementoAbierto && section.elementos[ni]) {
+                            onElementoAbierto(section.elementos[ni].id)
+                          }
+                        }}
                         onUpdate={actualizarElemento} onDelete={eliminarElemento}
                         onMover={dir=>moverElemento(idx,dir)} onFileSelected={onFileSelected}/>
                     ))

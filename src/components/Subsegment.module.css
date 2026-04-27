@@ -158,3 +158,32 @@
   padding: 8px 12px; min-height: 24px;
   font-family: 'Noto Sans', sans-serif; font-size: 13px;
 }
+
+/* ── Fix: listas con margen interno en preview del subsegmento ── */
+.prevBox ul,
+.prevBox ol {
+  padding-left: 22px;
+  margin: 0;
+}
+.prevBox ul li::marker { color: #a57f2c; }
+.prevBox ol li::marker { color: #1e5b4f; font-weight: 700; }
+
+/* ── Fix responsive: subsegmentos en móvil ── */
+@media (max-width: 480px) {
+  .subHead {
+    padding: 7px 9px;
+    gap: 5px;
+  }
+  .subNombre {
+    font-size: 12px;
+  }
+  .subCount {
+    display: none;
+  }
+  .subBody {
+    padding: 9px 10px;
+  }
+  .elemResumen {
+    max-width: 130px;
+  }
+}

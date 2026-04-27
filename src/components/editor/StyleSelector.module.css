@@ -2,13 +2,19 @@
 
 .styleRow {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: minmax(140px, 180px) 1fr;
   gap: 10px;
   align-items: start;
   padding: 9px 10px;
   background: #f8f7f4;
   border: 1.5px solid #ebebea;
   border-radius: 8px;
+}
+
+@media (max-width: 400px) {
+  .styleRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .selectorWrap {

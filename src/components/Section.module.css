@@ -325,3 +325,38 @@
   gap: 8px;
   margin-top: 4px;
 }
+
+/* ── Fix: listas con margen interno en preview local ── */
+.previewBox ul,
+.previewBox ol {
+  padding-left: 22px;
+  margin: 0;
+}
+.previewBox ul li::marker { color: #a57f2c; }
+.previewBox ol li::marker { color: #1e5b4f; font-weight: 700; }
+
+/* ── Fix responsive: cabeceras apretadas en teléfonos angostos ── */
+@media (max-width: 480px) {
+  /* Reducir padding de la cabecera de sección */
+  .seccionHead {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  /* Ocultar contador (no es crítico en móvil) */
+  .seccionCount {
+    display: none;
+  }
+  /* Reducir padding de cabecera de elemento */
+  .elementoHead {
+    padding: 6px 8px;
+    gap: 5px;
+  }
+  /* Resumen más corto en pantalla angosta */
+  .elementoResumen {
+    max-width: 140px;
+  }
+  /* Cuerpo de sección con menos padding lateral */
+  .seccionBody {
+    padding: 11px 10px;
+  }
+}

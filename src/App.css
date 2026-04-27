@@ -42,3 +42,14 @@ body {
   .app-builder { width: 100%; height: auto; overflow: visible; }
   .app-preview { height: 400px; width: 100%; }
 }
+
+/* ── Fix: preview más alto en teléfono pequeño ── */
+@media (max-width: 480px) {
+  .app-preview {
+    height: 320px;
+  }
+  /* Espacio extra abajo para que el FAB no tape contenido */
+  .app-builder {
+    padding-bottom: 70px;
+  }
+}
