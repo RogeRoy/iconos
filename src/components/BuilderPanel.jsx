@@ -87,7 +87,9 @@ const BuilderPanel = forwardRef(function BuilderPanel({
     if (activeElemIdExterno && activeElemIdExterno !== prevElemRef.current) {
       prevElemRef.current = activeElemIdExterno
       setActiveElemFromPreview(activeElemIdExterno)
-      setTimeout(() => { if(onActiveElemChange) onActiveElemChange(null); prevElemRef.current=null; setActiveElemFromPreview(null) }, 300)
+      // 600ms: da tiempo suficiente para que Section abra su accordeón
+      // antes de que se resetee el activeElemIdFromPreview
+      setTimeout(() => { if(onActiveElemChange) onActiveElemChange(null); prevElemRef.current=null; setActiveElemFromPreview(null) }, 600)
     }
   }, [activeElemIdExterno, onActiveElemChange])
 

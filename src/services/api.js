@@ -2,21 +2,11 @@
 // services/api.js — Cliente HTTP para la API del sistema de boletines
 // ─────────────────────────────────────────────────────────────────────────
 //
-// ARQUITECTURA:
-//   Este archivo es el único punto de contacto entre el frontend React
-//   y el backend. Todos los demás componentes importan de aquí.
-//   Ningún componente hace fetch() o axios directamente.
-//
-// BASE URL: http://localhost:3001/
-// AUTH: JWT Bearer Token (ver TOKEN abajo)
-//
 // FLUJO DE GUARDADO (orden obligatorio):
-//   1. Registrar recursos (imágenes/urls/mails) → POST /bulletin-resources
-//      Obtener los resource_id generados por la BD
-//   2. Guardar las imágenes en public/assets/section_images/{bull_id}/
-//      con el nombre: secimg_{original}_{bull_id}_{fecha}.{ext}
-//   3. Guardar las secciones del documento → POST /bulletin/sections/batch
-//      Incluyendo los resource_id obtenidos en el paso 1
+//   1. POST /__upload          → guarda imagen en public/assets/section_images/
+//      (servidor Vite en desarrollo — escribe el archivo físicamente en disco)
+//   2. POST /bulletin-resources → registra el recurso en BD → obtiene resource_id
+//   3. POST /bulletin/sections/batch → guarda las secciones con los resource_id
 // ─────────────────────────────────────────────────────────────────────────
 
 import axios from 'axios'
@@ -25,213 +15,146 @@ import axios from 'axios'
 // ⚠ HARDCODE DE DESARROLLO — cambiar antes de pasar a producción
 // ═══════════════════════════════════════════════════════════════════════
 
-// Token JWT de autenticación.
-// Para cambiar el token: modifica SOLO esta cadena de texto.
-// En producción esto debe venir de un login, no estar aquí.
-// Cuando el token expire verás errores 401 Unauthorized en la consola.
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzMxOTE2OSwiZXhwIjoxNzc3MzQ3OTY5fQ.gVrgJJStfoqLO1gl9Mkb6sK3fo9t0kaezVFrcpJbxyI'
+// Token JWT — para cambiar: modifica SOLO esta cadena
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzQxNjE4MiwiZXhwIjoxNzc3NDQ0OTgyfQ.LTneEA7Dmv9wEMsASnjjx9nZqvGBJC5OvMokkRRj61w'
 
-// ID del boletín activo.
-// En producción esto vendrá del flujo de creación/edición del boletín.
-// Por ahora está fijo en 1 para desarrollo.
-export const BULLETIN_ID_HARDCODE = 1
+// ID del boletín activo — por ahora fijo en 3
+export const BULLETIN_ID_HARDCODE = 3
 
-// ═══════════════════════════════════════════════════════════════════════
-// FIN HARDCODE
-// ═══════════════════════════════════════════════════════════════════════
-
-// URL base del servidor backend
+// URL del servidor backend
 const BASE_URL = 'http://localhost:3001'
 
-// ── Instancia de Axios ──────────────────────────────────────────────────
-// axios.create() devuelve un objeto que funciona igual que axios pero
-// con configuración predefinida. Así no hay que repetir headers en cada llamada.
+// ── Instancia Axios con headers por defecto ───────────────────────────
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,                                  // 15 segundos máximo de espera
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${TOKEN}`,            // token JWT en cada petición
+    'Authorization': `Bearer ${TOKEN}`,
   },
 })
 
-// ── Interceptor de respuesta (Error Handling global) ───────────────────
-// Los interceptores son funciones que se ejecutan automáticamente
-// antes/después de cada petición o respuesta.
-//
-// Este interceptor captura TODOS los errores HTTP (4xx y 5xx)
-// y los transforma en mensajes más útiles para mostrar al usuario.
-//
-// OWASP A09 - Security Logging: registramos el error sin datos sensibles.
+// ── Interceptor de errores HTTP ───────────────────────────────────────
 api.interceptors.response.use(
-  // Respuesta exitosa (2xx): pasar sin modificar
   res => res,
-
-  // Error (4xx, 5xx, timeout, red):
   err => {
-    // Extraer el código de estado HTTP (404, 500, etc.)
-    const status = err.response?.status
+    const status    = err.response?.status
+    const serverMsg = err.response?.data?.message || err.response?.data?.error || null
+    const metodo    = err.config?.method?.toUpperCase() || 'REQUEST'
+    const url       = err.config?.url || '?'
 
-    // Extraer el mensaje del servidor (si lo envió)
-    const serverMsg = err.response?.data?.message
-      || err.response?.data?.error
-      || null
+    if      (status === 401) console.error(`[API 401] Token inválido/expirado → ${metodo} ${url}`)
+    else if (status === 403) console.error(`[API 403] Sin permisos → ${metodo} ${url}`)
+    else if (status === 404) console.error(`[API 404] Ruta no encontrada → ${metodo} ${url}`)
+    else if (status >= 500)  console.error(`[API ${status}] Error servidor → ${metodo} ${url}`, serverMsg)
+    else if (!err.response)  console.error(`[API RED] Sin conexión → verifica ${BASE_URL}`)
+    else                     console.error(`[API ${status}] → ${metodo} ${url}`, serverMsg)
 
-    // Construir un mensaje legible para el desarrollador
-    const metodo = err.config?.method?.toUpperCase() || 'REQUEST'
-    const url    = err.config?.url || '?'
-
-    if (status === 401) {
-      // 401 = token expirado o inválido
-      console.error(`[API 401] Token inválido o expirado → ${metodo} ${url}`)
-      console.error('  Actualiza la constante TOKEN en services/api.js')
-    } else if (status === 403) {
-      // 403 = no tiene permisos para esta acción
-      console.error(`[API 403] Sin permisos → ${metodo} ${url}`)
-    } else if (status === 404) {
-      // 404 = endpoint no existe en el servidor
-      console.error(`[API 404] Ruta no encontrada → ${metodo} ${url}`)
-    } else if (status >= 500) {
-      // 500+ = error en el servidor backend
-      console.error(`[API ${status}] Error del servidor → ${metodo} ${url}`)
-      if (serverMsg) console.error('  Mensaje del servidor:', serverMsg)
-    } else if (!err.response) {
-      // Sin respuesta = servidor apagado, CORS, o sin internet
-      console.error(`[API RED] Sin conexión → ${metodo} ${url}`)
-      console.error('  Verifica que el servidor está corriendo en', BASE_URL)
-    } else {
-      console.error(`[API ${status}] Error → ${metodo} ${url}`, serverMsg || err.message)
-    }
-
-    // Re-lanzar el error para que el código que llamó pueda manejarlo
-    // con try/catch (no "tragarse" el error silenciosamente)
     return Promise.reject(err)
   }
 )
 
 // ═══════════════════════════════════════════════════════════════════════
-// PASO 1: Registrar recursos (imágenes, URLs, correos)
+// PASO 0: Guardar imagen FÍSICAMENTE en disco
 // ═══════════════════════════════════════════════════════════════════════
 //
-// POST http://localhost:3001/bulletin-resources
+// POST /__upload  (servidor Vite — NO es la API de producción)
 //
-// La tabla bulletin_resource guarda la descripción de cada recurso
-// (nombre de imagen, URL, correo) y genera un resource_id único.
-// Ese ID se usa después al guardar las secciones.
+// El browser no puede escribir en el sistema de archivos por razones de
+// seguridad. Esta función le pide al servidor Vite (Node.js) que lo haga.
+// El plugin uploadImagePlugin en vite.config.js recibe la petición y
+// escribe el archivo en: public/assets/section_images/{bull_id}/{filename}
 //
-// PARÁMETRO:
-//   recursos → array de objetos: [{ resource_desc: "nombre.png" }, ...]
-//
-// RETORNA:
-//   { success: true, inserted_ids: [12, 13, 14] }
-//   Los IDs están en el mismo orden que el array enviado:
-//   recursos[0] → inserted_ids[0], recursos[1] → inserted_ids[1], etc.
-//
-// MANEJO DE ERRORES:
-//   Si falla, lanza el error para que useGuardarBoletin lo maneje.
-export async function registrarRecursos(recursos) {
-  // recursos = [{ resource_desc: "Logo.png" }, { resource_desc: "https://..." }]
-  const res = await api.post('/bulletin-resources', recursos)
-  // res.data = { success: true, inserted_ids: [12, 13, 14] }
-  return res.data
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// PASO 2: Guardar imagen en el servidor
-// ═══════════════════════════════════════════════════════════════════════
-//
-// Las imágenes se guardan en: public/assets/section_images/{bull_id}/
-// con el nombre: secimg_{nombreOriginal}_{bull_id}_{yyyyMMdd_HHmmss}.{ext}
+// Nombre del archivo generado:
+//   secimg_{nombreOriginal}_{bull_id}_{yyyyMMdd_HHmmss}.{ext}
+//   Ejemplo: secimg_Logo CONAMED_1_20260428_143055.png
 //
 // PARÁMETROS:
-//   file      → objeto File del navegador (viene del input type="file")
-//   bullId    → ID del boletín (BULLETIN_ID_HARDCODE por ahora)
+//   file    → objeto File del browser (viene del <input type="file">)
+//   bullId  → ID del boletín (para crear la subcarpeta correspondiente)
 //
 // RETORNA:
-//   { filename, localPath, url }
-//   filename  → nombre final del archivo (con fecha)
-//   localPath → ruta en el proyecto: public/assets/section_images/{bullId}/
-//   url       → URL relativa para usar en <img src="">
-//
-// NOTA IMPORTANTE:
-//   Esta función guarda la imagen localmente en el proyecto React (en /public/).
-//   El archivo quedará disponible en: http://localhost:5173/assets/section_images/...
-//   En producción, el backend debería manejar esto con una API de upload.
-export async function guardarImagenLocal(file, bullId) {
-  // ── Extraer la extensión del archivo original ────────────────────────
-  // file.name podría ser "logo CONAMED.png" o "foto.JPG"
-  // split('.').pop() toma la última parte después del último punto
-  // toLowerCase() normaliza a minúsculas: "JPG" → "jpg"
-  const ext = file.name.split('.').pop().toLowerCase() || 'jpg'
-
-  // ── Generar el nombre del archivo con fecha ──────────────────────────
-  // Formato: secimg_{nombreOriginal}_{bullId}_{yyyyMMdd_HHmmss}.{ext}
-  // Ejemplo: secimg_logo.png_1_20260427_143055.png
-  const nombreBase = file.name.replace(/\.[^/.]+$/, '')  // quitar extensión del nombre
-  const fecha      = getSufijoDeFecha()                  // _20260427_143055
+//   { ok, url, filename, path }
+//   url      → URL relativa: "/assets/section_images/1/secimg_Logo_1_....png"
+//   filename → nombre final del archivo con fecha
+//   path     → ruta absoluta en el disco del servidor
+export async function guardarImagenFisica(file, bullId) {
+  // ── Generar el nombre con el formato acordado ─────────────────────────
+  //   secimg_{nombreBase}_{bullId}_{yyyyMMdd_HHmmss}.{ext}
+  const ext        = file.name.split('.').pop().toLowerCase() || 'jpg'
+  const nombreBase = file.name.replace(/\.[^/.]+$/, '')  // quitar extensión
+  const fecha      = getSufijoDeFecha()                  // _20260428_143055
   const filename   = `secimg_${nombreBase}_${bullId}${fecha}.${ext}`
 
-  // ── Ruta de destino ──────────────────────────────────────────────────
-  // En React + Vite, los archivos en /public/ son accesibles como URLs estáticas.
-  // La carpeta public/assets/section_images/{bullId}/ debe existir.
-  const localPath = `public/assets/section_images/${bullId}/`
-  const url       = `/assets/section_images/${bullId}/${filename}`
+  console.log(`[IMG] Preparando imagen: ${filename}`)
+  console.log(`[IMG] Destino: public/assets/section_images/${bullId}/`)
 
-  // ── Nota sobre el guardado real ──────────────────────────────────────
-  // El navegador NO puede escribir archivos en el sistema de archivos directamente.
-  // Esta función simula el guardado: devuelve el nombre y la ruta esperada.
-  // El archivo real se guardaría en producción a través de la API del backend.
-  // Por ahora, la imagen se mostrará en el preview usando URL.createObjectURL(file).
-  console.log(`[IMG] Imagen para guardar: ${localPath}${filename}`)
+  // ── Construir el FormData ─────────────────────────────────────────────
+  // FormData es el formato estándar del browser para enviar archivos por HTTP.
+  // Es el mismo formato que usa un <form enctype="multipart/form-data">.
+  const form = new FormData()
+  form.append('image',    file, filename)      // el archivo binario con su nuevo nombre
+  form.append('filename', filename)            // nombre final para que Vite lo use al escribir
+  form.append('bull_id',  String(bullId))      // subcarpeta donde guardar
 
-  return { filename, localPath, url, ext }
+  // ── Enviar al servidor Vite (no a la API de producción) ───────────────
+  // /__upload es un endpoint especial de desarrollo manejado por vite.config.js
+  // No lleva el header Authorization porque no es la API real
+  const res = await fetch('/__upload', {
+    method:  'POST',
+    body:    form,
+    // NO poner Content-Type — el browser lo pone automáticamente con el boundary correcto
+  })
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ error: 'Error desconocido' }))
+    throw new Error(`Error al guardar imagen: ${errData.error}`)
+  }
+
+  const data = await res.json()
+  console.log(`[IMG] ✅ Imagen guardada físicamente: ${data.path}`)
+  console.log(`[IMG]    Accesible en: http://localhost:5173${data.url}`)
+
+  return data  // { ok: true, url, filename, path }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// PASO 3: Guardar secciones del boletín
-// ═══════════════════════════════════════════════════════════════════════
-//
-// POST http://localhost:3001/bulletin/sections/batch
-//
-// Envía un array de secciones con la estructura exacta que espera la BD.
-// Cada sección debe incluir su resource_id si tiene imagen/url/mail.
-//
-// PARÁMETRO:
-//   secciones → array de objetos con la estructura de bulletin_sections
-//
-// RETORNA:
-//   Respuesta del servidor (varía según implementación del backend)
-export async function guardarSeccionesBatch(secciones) {
-  // El endpoint espera el array dentro del campo "data"
-  const res = await api.post('/bulletin/sections/batch', { data: secciones })
-  return res.data
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Funciones auxiliares (mantener compatibilidad con código anterior)
-// ─────────────────────────────────────────────────────────────────────────
-
-// Función auxiliar de fecha (se usa en guardarImagenLocal)
+// ── Función auxiliar de fecha ─────────────────────────────────────────
+// Genera sufijo: _20260428_143055
 function getSufijoDeFecha() {
   const n = new Date()
   const p = x => String(x).padStart(2, '0')
   return `_${n.getFullYear()}${p(n.getMonth()+1)}${p(n.getDate())}_${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`
 }
 
-// Genera el nombre de imagen con el formato esperado
+// ── Función pública para generar el nombre (usada en useGuardarBoletin) ─
 export function generarNombreImagen(file, bulletinId) {
-  const ext      = file.name.split('.').pop().toLowerCase() || 'jpg'
+  const ext        = file.name.split('.').pop().toLowerCase() || 'jpg'
   const nombreBase = file.name.replace(/\.[^/.]+$/, '')
-  const fecha    = getSufijoDeFecha()
-  return `secimg_${nombreBase}_${bulletinId}${fecha}.${ext}`
+  return `secimg_${nombreBase}_${bulletinId}${getSufijoDeFecha()}.${ext}`
 }
 
-// Mantenidas por compatibilidad con hooks que las importan
+// ═══════════════════════════════════════════════════════════════════════
+// PASO 1: Registrar recursos en bulletin_resource
+// ═══════════════════════════════════════════════════════════════════════
+// POST http://localhost:3001/bulletin-resources
+// Retorna: { success: true, inserted_ids: [12, 13, 14] }
+export async function registrarRecursos(recursos) {
+  const res = await api.post('/bulletin-resources', recursos)
+  return res.data
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PASO 2: Guardar secciones del boletín
+// ═══════════════════════════════════════════════════════════════════════
+// POST http://localhost:3001/bulletin/sections/batch
+export async function guardarSeccionesBatch(secciones) {
+  const res = await api.post('/bulletin/sections/batch', { data: secciones })
+  return res.data
+}
+
+// ── Mantenidas por compatibilidad ─────────────────────────────────────
 export async function guardarBoletin(flatJson) {
-  // Por ahora usa guardarSeccionesBatch internamente
-  // En el futuro, aquí iría POST /bulletins para crear el boletín primero
-  const secciones = flatJson?.bulletin_sections || []
-  return guardarSeccionesBatch(secciones)
+  return guardarSeccionesBatch(flatJson?.bulletin_sections || [])
 }
 export async function actualizarBoletin(bulletinId, flatJson) {
   const res = await api.put(`/bulletins/${bulletinId}`, flatJson)

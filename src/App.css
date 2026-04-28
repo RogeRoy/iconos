@@ -1,5 +1,8 @@
-/* App.css — Layout principal de la aplicación */
+/* ─────────────────────────────────────────────────────────
+   App.css — Layout principal del sistema builder
+   ─────────────────────────────────────────────────────── */
 
+/* Reset base */
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
@@ -7,49 +10,98 @@ body {
   padding: 0;
   font-family: 'Noto Sans', sans-serif;
   background: #f0ece8;
-  overflow: hidden; /* El scroll lo maneja cada panel por separado */
+  /* ✅ SIN overflow:hidden en body.
+     En desktop los paneles tienen su propio scroll interno.
+     En móvil el body necesita poder scrollear normalmente. */
 }
 
-/* ── Layout principal: dos columnas ── */
-/* El builder ocupa el 57% izquierdo, el preview el 43% derecho */
+/* ══════════════════════════════════════════════════════
+   DESKTOP (≥ 901px): dos columnas lado a lado
+   Builder 57% izquierda | Preview 43% derecha
+   ══════════════════════════════════════════════════════ */
 .app-layout {
   display: flex;
   width: 100vw;
   height: 100vh;
+  /* ✅ overflow:hidden solo en el contenedor, no en body.
+     Esto permite que cada panel tenga su propio scroll. */
   overflow: hidden;
 }
 
+/* Panel del builder — scroll independiente */
 .app-builder {
   width: 57%;
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: auto;      /* scroll vertical interno */
   overflow-x: hidden;
   flex-shrink: 0;
 }
+/* Scrollbar estilizada (solo webkit: Chrome, Safari, Edge) */
 .app-builder::-webkit-scrollbar { width: 6px; }
 .app-builder::-webkit-scrollbar-track { background: #f0ece8; }
 .app-builder::-webkit-scrollbar-thumb { background: #c9a76c; border-radius: 10px; }
 
+/* Panel del preview — scroll independiente */
 .app-preview {
   flex: 1;
   height: 100vh;
-  overflow: hidden;
+  overflow: hidden; /* el scroll interno lo maneja PreviewPanel */
 }
 
-/* ── Responsive: en pantallas pequeñas, solo builder ── */
+/* ══════════════════════════════════════════════════════
+   TABLET (≤ 900px): paneles apilados verticalmente
+   Builder arriba | Preview abajo
+   ══════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
-  .app-layout { flex-direction: column; overflow: auto; height: auto; }
-  .app-builder { width: 100%; height: auto; overflow: visible; }
-  .app-preview { height: 400px; width: 100%; }
+  body {
+    /* ✅ En móvil/tablet: el body es el que scrollea.
+       overflow:auto permite scroll cuando el contenido
+       supera la altura de la pantalla. */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .app-layout {
+    /* Apilar verticalmente */
+    flex-direction: column;
+    /* ✅ Quitar la altura fija — el contenido define la altura */
+    height: auto;
+    /* ✅ Quitar overflow:hidden — el body maneja el scroll */
+    overflow: visible;
+    width: 100%;
+  }
+
+  .app-builder {
+    /* ✅ Ancho completo en tablet/móvil */
+    width: 100%;
+    /* ✅ Altura automática — el contenido define cuánto ocupa */
+    height: auto;
+    /* ✅ Sin overflow propio — el body scrollea */
+    overflow: visible;
+    /* Espacio al fondo para que el FAB no tape el último elemento */
+    padding-bottom: 80px;
+  }
+
+  .app-preview {
+    /* Altura fija para el panel de preview en tablet */
+    height: 420px;
+    width: 100%;
+    /* El overflow interno lo sigue manejando PreviewPanel */
+    overflow: hidden;
+  }
 }
 
-/* ── Fix: preview más alto en teléfono pequeño ── */
+/* ══════════════════════════════════════════════════════
+   TELÉFONO PEQUEÑO (≤ 480px): ajustes extra
+   ══════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
   .app-preview {
+    /* Preview más compacto en teléfono pequeño (iPhone SE, etc.) */
     height: 320px;
   }
-  /* Espacio extra abajo para que el FAB no tape contenido */
+
   .app-builder {
-    padding-bottom: 70px;
+    /* Más espacio para el FAB en teléfono */
+    padding-bottom: 90px;
   }
 }

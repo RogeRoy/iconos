@@ -26,12 +26,15 @@ const COLORS = {
 
 function enviarAlServidor(level, msg, data) {
   if (!IS_DEV) return
-  // No bloquear — fire and forget
+  // Fire and forget: no bloquear el flujo principal.
+  // El .catch(() => {}) suprime el error 404 que aparece cuando
+  // el plugin devLogPlugin de vite.config.js no está activo.
+  // Esto evita el mensaje "POST /__devlog 404" en la consola.
   fetch('/__devlog', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ level, msg, data }),
-  }).catch(() => { /* silencioso si el servidor no está */ })
+  }).catch(() => {})  // silencioso — 404 esperado si el plugin no está
 }
 
 // ── devLog(categoria, mensaje, dato) ─────────────────────
