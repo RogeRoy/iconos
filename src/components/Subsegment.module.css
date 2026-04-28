@@ -187,3 +187,25 @@
     max-width: 130px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE ADICIONAL — Subsegment
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .subCard {
+    border-radius: 7px;
+  }
+  .subBody {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .subNum {
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+  .subNombre {
+    max-width: 90px;
+  }
+}

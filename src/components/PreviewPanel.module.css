@@ -102,3 +102,36 @@
 
 /* ── Fix: margen interno en preview para listas ── */
 .body ul, .body ol { padding-left: 22px; }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE — PreviewPanel
+   ══════════════════════════════════════════════════════ */
+
+/* En tablet (≤ 900px): el preview está abajo,
+   quitar el border-left y cambiar a border-top */
+@media (max-width: 900px) {
+  .panel {
+    border-left: none;
+    border-top: 2px solid #611232;
+    box-shadow: 0 -3px 14px rgba(0,0,0,.08);
+    /* height lo controla .app-preview en App.css (420px) */
+    height: 100%;
+  }
+  .header {
+    padding: 8px 14px;
+  }
+  .headerHint {
+    display: none; /* menos espacio en tablet */
+  }
+}
+
+/* Teléfono (≤ 480px): header más compacto */
+@media (max-width: 480px) {
+  .header {
+    padding: 7px 12px;
+  }
+  .headerBadge {
+    font-size: 8px;
+    padding: 2px 7px;
+  }
+}

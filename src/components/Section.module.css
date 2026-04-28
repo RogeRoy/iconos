@@ -360,3 +360,41 @@
     padding: 11px 10px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE ADICIONAL — Section
+   ══════════════════════════════════════════════════════ */
+
+/* Tablet (≤ 900px): la sección ocupa el 100% del ancho */
+@media (max-width: 900px) {
+  .seccionCard {
+    /* Sin margen lateral extra — aprovechar todo el ancho */
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 8px;
+  }
+  .seccionBody {
+    padding: 12px 14px;
+  }
+  /* Botones de la toolbar de elemento con wrap */
+  .elementosLista {
+    gap: 6px;
+  }
+}
+
+/* Teléfono muy pequeño (≤ 360px): Galaxy Fold, etc. */
+@media (max-width: 360px) {
+  /* Ocultar el badge de layout (▬ ▬▬ ▬▬▬) para ganar espacio */
+  .layoutBadge {
+    display: none;
+  }
+  /* Reducir el badge SEG-1 */
+  .seccionNum {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+  /* Limitar nombre para que no empuje los botones */
+  .seccionNombre {
+    max-width: 100px;
+  }
+}

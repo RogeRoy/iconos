@@ -237,3 +237,39 @@
   margin-left: 8px;
 }
 .btnDescargarJson:hover { background: #002f2a; }
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE — BuilderPanel
+   ══════════════════════════════════════════════════════ */
+
+/* Tablet (≤ 900px): el topbar necesita menos padding */
+@media (max-width: 900px) {
+  .topbar {
+    padding: 10px 16px;
+  }
+  .contenido {
+    padding: 16px 14px 80px;
+    gap: 12px;
+  }
+  /* max-width completo en tablet — aprovechar el ancho */
+  .contenido {
+    max-width: 100%;
+  }
+}
+
+/* Teléfono (≤ 480px): más compacto */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 8px 12px;
+  }
+  .topbarTitulo {
+    font-size: 14px;
+  }
+  .topbarBadge {
+    display: none; /* ocultar badge en pantalla muy pequeña */
+  }
+  .contenido {
+    padding: 12px 10px 90px;
+    gap: 10px;
+  }
+}

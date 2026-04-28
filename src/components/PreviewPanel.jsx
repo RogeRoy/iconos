@@ -77,7 +77,7 @@ function renderElem(elem, secId, subId) {
     case 'h2':   inner = `<h2 class="doc-h2" style="${as}">${d}</h2>`; break
     case 'h3':   inner = `<h3 class="doc-h3" style="${as}">${d}</h3>`; break
     case 'p':    inner = `<p class="doc-p" style="${as}">${d}</p>`; break
-    case 'hl':   inner = `<div class="doc-highlight" style="${as}">${d}</div>`; break
+    case 'hl':   inner = `<div class="doc-highlight" style="display:flex;gap:8px;align-items:flex-start;${as}"><span style="font-size:16px;flex-shrink:0;line-height:1.4">⚠</span><div style="flex:1">${d}</div></div>`; break
     case 'note': inner = `<blockquote class="doc-note" style="${as}">${d}</blockquote>`; break
     case 'hr':   inner = `<hr class="doc-hr">`; break
     case 'url':  inner = `<div style="${as}"><a class="doc-url" href="#">${contenido||empty}</a></div>`; break

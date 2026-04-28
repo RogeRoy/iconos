@@ -1,5 +1,9 @@
 /* FloatingToolbar.module.css — identidad gráfica institucional */
 
+/* ══════════════════════════════════════════════════════
+   DESKTOP (≥ 901px): barra vertical entre los paneles
+   Posición fija en el borde de los dos paneles (left:57%)
+   ══════════════════════════════════════════════════════ */
 .fab {
   position: fixed;
   left: 57%;
@@ -10,16 +14,15 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  /* Guinda oscuro + borde dorado = identidad gráfica */
-  background: #611232;
-  border: 2px solid #a57f2c;
+  background: #611232;           /* guinda institucional */
+  border: 2px solid #a57f2c;    /* borde dorado */
   border-radius: 18px;
   padding: 10px 6px;
   box-shadow: 0 6px 28px rgba(97,18,50,.5), 0 2px 6px rgba(0,0,0,.3);
   user-select: none;
 }
 
-/* ── Botón base: dorado sobre guinda ── */
+/* ── Botón base ── */
 .fabBtn {
   display: flex;
   flex-direction: column;
@@ -27,7 +30,7 @@
   gap: 4px;
   background: transparent;
   border: none;
-  color: #e6d194;          /* dorado institucional */
+  color: #e6d194;
   cursor: pointer;
   padding: 10px 12px;
   border-radius: 12px;
@@ -36,12 +39,10 @@
   font-family: 'Noto Sans', sans-serif;
 }
 .fabBtn:hover:not(:disabled) {
-  background: rgba(230,209,148,.18);  /* dorado translúcido al hover */
+  background: rgba(230,209,148,.18);
   transform: scale(1.07);
 }
-.fabBtn:active:not(:disabled) {
-  transform: scale(0.97);
-}
+.fabBtn:active:not(:disabled) { transform: scale(0.97); }
 .fabBtn:disabled { opacity: 0.35; cursor: default; }
 
 .fabLabel {
@@ -52,36 +53,30 @@
   color: #e6d194;
 }
 
-/* ── Guardar: verde institucional ── */
-.fabGuardar { color: #8ecfb4; }
-.fabGuardar .fabLabel { color: #8ecfb4; }
-.fabGuardar:hover:not(:disabled) { background: rgba(30,91,79,.25) !important; }
+/* Todos los botones en dorado uniforme */
+.fabGuardar   { color: #e6d194; }
+.fabDescargar { color: #e6d194; }
+.fabCargando  { color: #9b6677; }
+.fabGuardar   .fabLabel,
+.fabDescargar .fabLabel { color: #e6d194; }
 
-/* ── Descargar: dorado más intenso ── */
-.fabDescargar { color: #c9a76c; }
-.fabDescargar .fabLabel { color: #c9a76c; }
-.fabDescargar:hover:not(:disabled) { background: rgba(165,127,44,.22) !important; }
-
-/* ── Cargando ── */
-.fabCargando { color: #9b6677; }
-
-/* ── Separador: línea dorada sutil ── */
+/* ── Separador ── */
 .sep {
   width: 36px; height: 1px;
   background: rgba(165,127,44,.35);
   margin: 3px 0;
 }
 
-/* ── Animación giratoria ── */
+/* ── Animación de carga ── */
 .spin { animation: fab-spin 1s linear infinite; }
 @keyframes fab-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-/* ── Contador: badge blanco sobre guinda oscuro ── */
+/* ── Contador de secciones ── */
 .counter {
   font-size: 11px; font-weight: 900;
   font-family: 'Courier New', monospace;
   color: #611232;
-  background: #e6d194;   /* dorado institucional */
+  background: #e6d194;
   border-radius: 100px;
   min-width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
@@ -90,17 +85,38 @@
   border: 1.5px solid #a57f2c;
 }
 
-/* ── Responsive ≤ 900px: barra horizontal en la parte inferior ── */
+/* ══════════════════════════════════════════════════════
+   TABLET/MÓVIL (≤ 900px): barra horizontal en el fondo
+   ══════════════════════════════════════════════════════
+   Cuando los paneles están apilados, el FAB va abajo del todo
+   como una barra de acciones flotante tipo app móvil.
+   position:fixed garantiza que siempre sea visible al scrollear. */
 @media (max-width: 900px) {
   .fab {
-    left: 50%; top: auto; bottom: 16px;
+    left: 50%;
+    top: auto;
+    bottom: 16px;
     transform: translateX(-50%);
     flex-direction: row;
     border-radius: 100px;
     padding: 8px 16px;
     gap: 0;
   }
-  .sep { width: 1px; height: 34px; margin: 0 4px; }
+  .sep     { width: 1px; height: 34px; margin: 0 4px; }
   .counter { margin-top: 0; margin-left: 6px; }
-  .fabBtn { min-width: 48px; padding: 8px 10px; }
+  .fabBtn  { min-width: 48px; padding: 8px 10px; }
+  .fabLabel { font-size: 8px; }
+}
+
+/* ══════════════════════════════════════════════════════
+   TELÉFONO PEQUEÑO (≤ 480px)
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .fab {
+    bottom: 10px;
+    padding: 6px 12px;
+  }
+  .fabBtn  { min-width: 40px; padding: 6px 8px; }
+  .fabLabel { display: none; } /* ocultar etiquetas en pantalla muy pequeña */
+  .counter { min-width: 18px; height: 18px; font-size: 10px; }
 }
