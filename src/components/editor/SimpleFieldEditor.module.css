@@ -152,3 +152,24 @@
 .anchorFieldWrap { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
 .anchorLabel { font-size: 11px; font-weight: 700; color: #611232; text-transform: uppercase; letter-spacing: .04em; }
 .anchorHint { font-size: 11px; color: #888; font-style: italic; }
+
+/* ── Responsive SimpleFieldEditor ── */
+@media (max-width: 480px) {
+  .dropZone {
+    min-height: 80px;
+    padding: 12px;
+  }
+  .dropTexto {
+    font-size: 12px;
+  }
+  .imgPreviewReal {
+    max-height: 120px;
+  }
+  .previewArea {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .anchorToggleLabel {
+    font-size: 11px;
+  }
+}

@@ -16,10 +16,10 @@ import axios from 'axios'
 // ═══════════════════════════════════════════════════════════════════════
 
 // Token JWT — para cambiar: modifica SOLO esta cadena
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzQxNjE4MiwiZXhwIjoxNzc3NDQ0OTgyfQ.LTneEA7Dmv9wEMsASnjjx9nZqvGBJC5OvMokkRRj61w'
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzQ3NTQyNywiZXhwIjoxNzc3NTA0MjI3fQ.sQxW0L6uH1Ln5mTMCk5_OIzHQvvf2564RRdVA0HxUuo'
 
-// ID del boletín activo — por ahora fijo en 3
-export const BULLETIN_ID_HARDCODE = 3
+// ID del boletín activo — por ahora fijo en 1
+export const BULLETIN_ID_HARDCODE = 4
 
 // URL del servidor backend
 const BASE_URL = 'http://localhost:3001'
@@ -33,6 +33,8 @@ const api = axios.create({
     'Authorization': `Bearer ${TOKEN}`,
   },
 })
+
+console.log('TOKEN JWT actual:', TOKEN);
 
 // ── Interceptor de errores HTTP ───────────────────────────────────────
 api.interceptors.response.use(

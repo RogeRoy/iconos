@@ -5,7 +5,7 @@ import { useState } from 'react'
 import styles from './FloatingToolbar.module.css'
 
 export default function FloatingToolbar({
-  onAgregarSeccion, onGuardar, onDescargar, onVerDocumento,
+  onAgregarSeccion, onGuardar, onDescargar, onVerDocumento, onEditarDocumento,
   cargando, totalSecciones,
 }) {
   // Estado de colapso: true = minimizado (solo muestra el botón toggle)
@@ -89,6 +89,20 @@ export default function FloatingToolbar({
             </svg>
             <span className={styles.fabLabel}>Ver Doc</span>
           </button>
+
+          <div className={styles.sep}/>
+
+          {/* Editar Documento existente */}
+          {onEditarDocumento && (
+            <button className={styles.fabBtn} onClick={onEditarDocumento}
+              title="Editar un boletín guardado anteriormente">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className={styles.fabLabel}>Editar</span>
+            </button>
+          )}
 
           <div className={styles.sep}/>
 

@@ -40,7 +40,9 @@ function IconoImagen({ size = 20 }) {
   )
 }
 
-export default function SimpleFieldEditor({ tipo, contenido, align, cssClases, onChange, onFileSelected }) {
+export default function SimpleFieldEditor({ tipo, contenido, align, cssClases, onChange, onFileSelected,
+  anchorText: anchorTextProp = '',  // valor inicial del anchorText (para modo edición)
+}) {
   const fileRef = useRef(null)
 
   // Estado de preview de imagen (URL temporal del objeto File)
@@ -55,17 +57,22 @@ export default function SimpleFieldEditor({ tipo, contenido, align, cssClases, o
 
   // Estado para URL con texto ancla opcional
   // anchorText = texto visible del link (si está vacío, se muestra la URL)
-  const [anchorText,  setAnchorText]  = useState('')
-  const [mostrarAnchor, setMostrarAnchor] = useState(false)
+  const [anchorText,  setAnchorText]  = useState(anchorTextProp || '')
+  const [mostrarAnchor, setMostrarAnchor] = useState(!!(anchorTextProp))
 
   // Función que notifica cambios al componente padre (Section/Subsegment)
+  // Incluye anchorText cuando existe para que el preview pueda usarlo
   const notificar = useCallback((extras = {}) => {
+    const nuevoAnchorText = extras.anchorText !== undefined ? extras.anchorText : anchorText
     onChange({
-      contenido: extras.contenido !== undefined ? extras.contenido : contenido,
-      align:     extras.align     !== undefined ? extras.align     : (align || 'left'),
-      cssClases: cssClases || '',
+      contenido:  extras.contenido  !== undefined ? extras.contenido  : contenido,
+      align:      extras.align      !== undefined ? extras.align      : (align || 'left'),
+      cssClases:  cssClases || '',
+      // anchorText: texto visible opcional del link
+      // Si es '' (vacío), el preview mostrará la URL directamente
+      anchorText: nuevoAnchorText || '',
     })
-  }, [contenido, align, cssClases, onChange])
+  }, [contenido, align, cssClases, onChange, anchorText])
 
   // ── Procesar archivo de imagen ────────────────────────────────────
   // Se llama cuando el usuario selecciona o arrastra una imagen.
@@ -280,7 +287,11 @@ export default function SimpleFieldEditor({ tipo, contenido, align, cssClases, o
             checked={mostrarAnchor}
             onChange={e => {
               setMostrarAnchor(e.target.checked)
-              if (!e.target.checked) setAnchorText('') // limpiar si se desactiva
+              if (!e.target.checked) {
+                setAnchorText('')
+                // Al desactivar el anchor, notificar que anchorText vuelve a ''
+                notificar({ anchorText: '' })
+              }
             }}
             className={styles.anchorCheckbox}
           />
@@ -299,7 +310,11 @@ export default function SimpleFieldEditor({ tipo, contenido, align, cssClases, o
             className={styles.input}
             value={anchorText}
             placeholder="Ej: Visita el sitio de CONAMED"
-            onChange={e => setAnchorText(e.target.value)}
+            onChange={e => {
+              setAnchorText(e.target.value)
+              // Notificar al padre con el nuevo anchorText
+              notificar({ anchorText: e.target.value })
+            }}
           />
           <span className={styles.anchorHint}>
             El usuario verá este texto en lugar de la URL completa.

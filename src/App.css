@@ -105,3 +105,39 @@ body {
     padding-bottom: 90px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   EDITOR DE BOLETINES — ajuste por barra superior fija
+   La barra de "Editando Boletín #N" tiene 34px de altura
+   y es position:fixed, por lo que hay que compensarla.
+   ══════════════════════════════════════════════════════ */
+.app-builder-editor {
+  margin-top: 34px;
+  height: calc(100vh - 34px);  /* descontar la barra del alto total */
+}
+.app-preview-editor {
+  margin-top: 34px;
+  height: calc(100vh - 34px);
+}
+
+/* En tablet/móvil (≤900px): los paneles se apilan
+   el marginTop se mantiene pero height pasa a auto */
+@media (max-width: 900px) {
+  .app-builder-editor {
+    height: auto;
+    padding-bottom: 114px; /* 80px normal + 34px de la barra = más espacio para el FAB */
+  }
+  .app-preview-editor {
+    height: 420px;  /* igual que .app-preview normal */
+    margin-top: 0;  /* ya no necesita compensar — va después del builder */
+  }
+}
+
+@media (max-width: 480px) {
+  .app-builder-editor {
+    padding-bottom: 124px;
+  }
+  .app-preview-editor {
+    height: 320px;
+  }
+}

@@ -80,7 +80,12 @@ function renderElem(elem, secId, subId) {
     case 'hl':   inner = `<div class="doc-highlight" style="display:flex;gap:8px;align-items:flex-start;${as}"><span style="font-size:16px;flex-shrink:0;line-height:1.4">⚠</span><div style="flex:1">${d}</div></div>`; break
     case 'note': inner = `<blockquote class="doc-note" style="${as}">${d}</blockquote>`; break
     case 'hr':   inner = `<hr class="doc-hr">`; break
-    case 'url':  inner = `<div style="${as}"><a class="doc-url" href="#">${contenido||empty}</a></div>`; break
+    case 'url': {
+      // Si tiene anchorText (texto visible del link), mostrarlo en lugar de la URL
+      const textoUrl = elem.anchorText || contenido || empty
+      inner = `<div style="${as}"><a class="doc-url" href="#">${textoUrl}</a></div>`
+      break
+    }
     case 'mail': inner = `<div style="${as}"><a class="doc-mailto" href="#">` +
       `<svg width="13" height="11" viewBox="0 0 22 18" fill="none" style="vertical-align:middle;margin-right:3px">` +
       `<rect x="1" y="1" width="20" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6"/>` +

@@ -16,7 +16,7 @@
 // Acordeón: al abrir un subsegmento el padre (Section) cierra los demás.
 // Controlado por isOpen/onToggle desde Section.jsx.
 // ─────────────────────────────────────────────────────────
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TypeMenu          from './editor/TypeMenu'
 import TitleEditor       from './editor/TitleEditor'
 import TextEditor        from './editor/TextEditor'
@@ -91,7 +91,7 @@ function ElemEditor({ elemento, onUpdate, onFileSelected }) {
   if (['ul','ol','ul-ol','hl','note'].includes(tipo))
     return <RichEditor tipo={tipo} html={elemento.html||''} align={elemento.align||info.defAlign||'left'} font={elemento.font||''} cssClases={elemento.cssClases||info.cssClases} hasListBar={info.hasListBar} hasFormatBar={true} placeholder={PH[tipo]||'Escribe aquí...'} onChange={({html,align,font,cssClases})=>onUpdate({html,align,font,cssClases,contenido:new DOMParser().parseFromString(html,'text/html').body.textContent||''})}/>
   if (['url','mail','img','hr'].includes(tipo))
-    return <SimpleFieldEditor tipo={tipo} contenido={elemento.contenido||''} align={elemento.align||info.defAlign||'left'} cssClases={elemento.cssClases||info.cssClases} onChange={({contenido,align,cssClases})=>onUpdate({contenido,align,cssClases})} onFileSelected={tipo==='img'?(file)=>{ onUpdate({ contenido:file.name, _fileUrl:URL.createObjectURL(file) }); if(onFileSelected) onFileSelected(file) }:undefined}/>
+    return <SimpleFieldEditor tipo={tipo} contenido={elemento.contenido||''} align={elemento.align||info.defAlign||'left'} cssClases={elemento.cssClases||info.cssClases} onChange={({contenido,align,cssClases,anchorText})=>onUpdate({contenido,align,cssClases,anchorText})} onFileSelected={tipo==='img'?(file)=>{ onUpdate({ contenido:file.name, _fileUrl:URL.createObjectURL(file) }); if(onFileSelected) onFileSelected(file) }:undefined}/>
   return null
 }
 
@@ -102,9 +102,23 @@ export default function Subsegment({
   sub, subIndex, isOpen, onToggle,
   onMover, canArriba, canAbajo,
   onUpdate, onDelete, onFileSelected,
+  activeElemIdFromPreview,
 }) {
   // Acordeón LOCAL de elementos: solo 1 abierto a la vez
   const [activeElem, setActiveElem] = useState(null)
+
+  // Abrir elemento cuando viene clic del preview principal
+  useEffect(() => {
+    if (!activeElemIdFromPreview) return
+    const idx = (sub.elementos||[]).findIndex(e => e.id === activeElemIdFromPreview)
+    if (idx !== -1) {
+      setActiveElem(idx)
+      setTimeout(() => {
+        const el = document.getElementById(`elemento-${activeElemIdFromPreview}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 80)
+    }
+  }, [activeElemIdFromPreview, sub.elementos])
   const genId = () => `elem_${Date.now()}_${Math.floor(Math.random()*1000)}`
 
   // ── CRUD elementos ────────────────────────────────────

@@ -23,7 +23,7 @@ import { decodeHtml }         from '../utils/htmlTokens'
 // HARDCODE DE DESARROLLO
 // ══════════════════════════════════════════════════════════
 // Token JWT — mismo que api.js. Cambiar aquí si expira.
-const TOKEN   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzM5NTk4MSwiZXhwIjoxNzc3NDI0NzgxfQ.9cjjaAi9cZc2EJxOdE6CM-7ywiwNDcCNW8mbrJYvPzU'
+const TOKEN   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzQ3NTQyNywiZXhwIjoxNzc3NTA0MjI3fQ.sQxW0L6uH1Ln5mTMCk5_OIzHQvvf2564RRdVA0HxUuo'
 const BASE_URL = 'http://localhost:3001'
 
 // ══════════════════════════════════════════════════════════
@@ -34,114 +34,89 @@ const BASE_URL = 'http://localhost:3001'
 // Se usan media queries aquí también para que el texto
 // se adapte a pantallas pequeñas.
 const DOC_STYLES = `
-/* ── Contenedor principal del documento ── */
+/* ══ Estilos del documento publicado ══════════════════════════
+   Idénticos al panel preview del builder para coherencia visual.
+   Más estilos de los tokens decodificados (strong, em, u, mark, s)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Contenedor principal ── */
 .visor-body {
   font-family: 'Noto Sans', sans-serif;
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: 14px;
+  line-height: 1.7;
   color: #1a1a1a;
   max-width: 860px;
   margin: 0 auto;
-  padding: 32px 24px 60px;
+  padding: 24px 22px 60px;
 }
 
-/* ── Tipografías ── */
-.visor-body h1,.doc-h1 { font-family: Georgia,serif; font-size: 26px; font-weight: 900; color: #611232; margin: 0 0 14px; }
-.visor-body h2,.doc-h2 { font-family: Georgia,serif; font-size: 20px; font-weight: 700; color: #9b2247; margin: 14px 0 8px; }
-.visor-body h3,.doc-h3 { font-family: 'Noto Sans',sans-serif; font-size: 14px; font-weight: 700; color: #1e5b4f; text-transform: uppercase; letter-spacing: .05em; margin: 12px 0 6px; }
-.visor-body p,.doc-p { font-size: 15px; margin: 0 0 10px; }
+/* ── Títulos (idénticos al PreviewPanel) ── */
+.doc-h1 { font-family: Georgia,serif; font-size: 22px; font-weight: 900; color: #611232; margin: 0 0 10px; }
+.doc-h2 { font-family: Georgia,serif; font-size: 17px; font-weight: 700; color: #9b2247; margin: 0 0 8px; }
+.doc-h3 { font-family: 'Noto Sans',sans-serif; font-size: 13px; font-weight: 700; color: #1e5b4f; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 6px; }
+
+/* Variante con Noto Sans (selector de fuente) */
+.noto-sans { font-family: 'Noto Sans', sans-serif !important; }
+.patria    { font-family: Georgia, serif !important; }
+
+/* ── Párrafo ── */
+.doc-p { font-size: 14px; color: #222; margin: 0 0 8px; line-height: 1.7; }
 
 /* ── Listas ── */
-.visor-body ul,.doc-ul { padding-left: 24px; margin: 0 0 10px; }
-.visor-body ul li::marker,.doc-ul li::marker { color: #a57f2c; }
-.visor-body ol,.doc-ol { padding-left: 26px; margin: 0 0 10px; }
-.visor-body ol li::marker,.doc-ol li::marker { color: #1e5b4f; font-weight: 700; }
+.doc-ul { padding-left: 20px; margin: 0 0 8px; }
+.doc-ul li::marker { color: #a57f2c; }
+.doc-ol { padding-left: 22px; margin: 0 0 8px; }
+.doc-ol li::marker { color: #1e5b4f; font-weight: 700; }
 
-/* ── Elementos especiales ── */
-.visor-body blockquote,.doc-note {
-  border-left: 4px solid #611232;
-  padding: 10px 18px;
-  background: #fdf5f7;
-  border-radius: 0 6px 6px 0;
-  margin: 10px 0;
-  font-style: italic;
-  color: #333;
-}
-.doc-highlight {
-  background: #fffde7;
-  border-left: 4px solid #f9a825;
-  padding: 12px 16px;
-  border-radius: 4px;
-  margin: 10px 0;
-  color: #5f4700;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-.visor-body hr,.doc-hr { border: none; border-top: 2px solid #d0b090; margin: 18px 0; }
+/* ── Aviso importante (highlight) ── */
+.doc-highlight { background: #fffde7; border-left: 4px solid #f9a825; padding: 10px 14px; border-radius: 4px; margin: 0 0 8px; color: #5f4700; font-size: 13px; display: flex; gap: 8px; align-items: flex-start; }
+
+/* ── Nota al margen ── */
+.doc-note { border-left: 4px solid #611232; padding: 8px 14px; background: #fdf5f7; border-radius: 0 4px 4px 0; margin: 0 0 8px; font-style: italic; color: #333; }
+
+/* ── Separador ── */
+.doc-hr { border: none; border-top: 2px solid #d0b090; margin: 12px 0; }
 
 /* ── Links ── */
-.visor-body a,.doc-url { color: #1e5b4f; font-weight: 600; text-decoration: underline; }
-.doc-mailto { color: #880e4f; font-weight: 600; text-decoration: underline; }
+.doc-url    { color: #1e5b4f; font-weight: 600; text-decoration: underline; font-size: 13px; }
+.doc-mailto { color: #880e4f; font-weight: 600; text-decoration: underline; font-size: 13px; }
 
-/* ── Imágenes ── */
-.visor-body img,.doc-img-full {
-  max-width: 100%;
-  border-radius: 6px;
-  margin: 8px 0;
-  display: block;
-  height: auto;
-}
+/* ── Imagen ── */
+.doc-img-full { max-width: 100%; display: block; border-radius: 4px; margin: 4px 0; }
+.img-left   { margin-right: auto; }
+.img-center { margin: 0 auto; }
+.img-right  { margin-left: auto; }
 
 /* ── Alineación ── */
-.text-left    { text-align: left    }
-.text-center  { text-align: center  }
-.text-right   { text-align: right   }
-.text-justify { text-align: justify }
-.img-left     { margin-right: auto  }
-.img-center   { margin: 0 auto      }
-.img-right    { margin-left: auto   }
+.text-left    { text-align: left; }
+.text-center  { text-align: center; }
+.text-right   { text-align: right; }
+.text-justify { text-align: justify; }
 
-/* ── Fuentes institucionales ── */
-.noto-sans { font-family: 'Noto Sans', sans-serif; }
-.patria    { font-family: Georgia, serif; }
+/* ── Formatos inline decodificados de los tokens ── */
+/* Estos vienen de decodeHtml(): [BOLD_START] → <strong>, etc. */
+.visor-body strong { font-weight: 700; color: inherit; }
+.visor-body em     { font-style: italic; }
+.visor-body u      { text-decoration: underline; }
+.visor-body s      { text-decoration: line-through; }
+.visor-body mark   { background: yellow; padding: 0 2px; border-radius: 2px; }
 
-/* ── Grid de columnas (segmentos con subsegmentos) ──
-   SIN bordes, SIN fondos, SIN márgenes extra.
-   Solo el layout de columnas es visible. */
-.visor-cols {
-  display: grid;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-}
+/* ── Grid de columnas (sin bordes ni márgenes extra) ── */
+.visor-cols   { display: grid; gap: 16px; margin: 0; padding: 0; }
 .visor-cols-2 { grid-template-columns: 1fr 1fr; }
 .visor-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-.visor-col    { padding: 0; margin: 0; }
+.visor-col    { padding: 0; margin: 0; min-width: 0; }
 
 /* ── RESPONSIVE ── */
-/* Tablet (≤ 768px): reducir fuente y padding */
 @media (max-width: 768px) {
-  .visor-body {
-    font-size: 14px;
-    padding: 20px 16px 48px;
-  }
-  .visor-body h1,.doc-h1 { font-size: 22px; }
-  .visor-body h2,.doc-h2 { font-size: 17px; }
-  /* Columnas: 2 se reducen a 1 en tablet */
+  .visor-body { font-size: 13px; padding: 16px 16px 48px; }
+  .doc-h1 { font-size: 19px; }
+  .doc-h2 { font-size: 15px; }
   .visor-cols-2 { grid-template-columns: 1fr; }
 }
-
-/* Celular (≤ 480px): mínimo posible */
 @media (max-width: 480px) {
-  .visor-body {
-    font-size: 13px;
-    padding: 14px 12px 40px;
-  }
-  .visor-body h1,.doc-h1 { font-size: 19px; }
-  .visor-body h2,.doc-h2 { font-size: 15px; }
-  /* Todas las columnas → 1 sola en celular */
-  .visor-cols-2,.visor-cols-3 { grid-template-columns: 1fr; }
+  .visor-body { font-size: 13px; padding: 12px 12px 40px; }
+  .visor-cols-2, .visor-cols-3 { grid-template-columns: 1fr; }
 }
 `
 
@@ -441,7 +416,7 @@ export default function VisorDocumento({ onVolver }) {
 
         <div style={{ width:'1px', height:'24px', background:'rgba(255,255,255,.2)', flexShrink:0 }}/>
 
-        <span style={{ color:'rgba(255,255,255,.85)', fontSize:'13px', fontWeight:700 }}>
+        <span style={{ color:'rgba(255,255,255,.85)', fontSize:'13px', fontWeight:700, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>
           📰 Visualizador de Boletines
         </span>
 
@@ -454,6 +429,7 @@ export default function VisorDocumento({ onVolver }) {
             borderRadius: '100px',
             border: '1px solid rgba(165,127,44,.5)',
             whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}>
             Boletín #{bullIdActual}
           </span>
@@ -461,7 +437,7 @@ export default function VisorDocumento({ onVolver }) {
       </div>
 
       {/* ── Panel de búsqueda ───────────────────────────────── */}
-      <div style={{ background:'#fff', borderBottom:'1px solid #e8e0d8', padding:'18px 24px' }}>
+      <div style={{ background:'#fff', borderBottom:'1px solid #e8e0d8', padding:'18px 24px', boxSizing:'border-box' }}>
         <div style={{
           maxWidth: '860px', margin: '0 auto',
           display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap',

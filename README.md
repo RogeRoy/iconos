@@ -1,7 +1,7 @@
 # Proyecto de Prueba: Generador de Documentos Estructurados
 
 <p align="center">
-  <img src="070_logo.PNG" alt="Logo Agencia de Transformación Digital" width="100%">
+  <img src="assets/070_logo.PNG" alt="Logo Agencia de Transformación Digital" width="100%">
 </p>
 
 ## 📋 Descripción del Proyecto

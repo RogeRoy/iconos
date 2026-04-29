@@ -4,6 +4,7 @@ import PreviewPanel     from './components/PreviewPanel'
 import FloatingToolbar  from './components/FloatingToolbar'
 import ErrorBoundary    from './components/ErrorBoundary'
 import VisorDocumento   from './components/VisorDocumento'
+import EditorBoletín  from './components/EditorBoletín'
 import { useGuardarBoletin } from './hooks/useGuardarBoletin'
 import './App.css'
 
@@ -20,7 +21,7 @@ function descargarJson(datos, nombre='boletin') {
 
 export default function App() {
   // 'builder' | 'visor'
-  const [pantalla, setPantalla] = useState('builder')
+  const [pantalla, setPantalla] = useState('builder')  // 'builder' | 'visor' | 'editor'
 
   const [secciones,       setSecciones]       = useState([])
   const [activeSectionId, setActiveSectionId] = useState(null)
@@ -54,11 +55,13 @@ export default function App() {
   const handleAgregarSeccion = useCallback(() => builderRef.current?.agregarSeccion(), [])
 
   const handleGuardar = useCallback(async () => {
-    const flat = builderRef.current?.buildJsonActual?.()
+    const flat     = builderRef.current?.buildJsonActual?.()
+    const imagenes = builderRef.current?.getImagenes?.() || {}
     if (!flat) return
     setGuardadoExitoso(false); setErrorGuardado('')
+    console.log('[GUARDAR] Imágenes a subir:', Object.keys(imagenes).length, Object.keys(imagenes))
     try {
-      await guardar(flat, {})
+      await guardar(flat, imagenes)
       // ✅ Guardado exitoso: mostrar mensaje y limpiar el builder
       setGuardadoExitoso(true)
       setSecciones([])  // vaciar el builder
@@ -80,11 +83,16 @@ export default function App() {
     return <VisorDocumento onVolver={() => setPantalla('builder')} />
   }
 
+  // Pantalla del editor de boletines existentes
+  if (pantalla === 'editor') {
+    return <EditorBoletín onVolver={() => setPantalla('builder')} />
+  }
+
   return (
     <div className="app-layout">
       {/* ── Notificación de guardado exitoso ── */}
       {guardadoExitoso && (
-        <div style={{ position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)', zIndex:1000, background:'#1e5b4f', color:'#fff', padding:'14px 24px', borderRadius:'10px', fontSize:'14px', fontWeight:700, display:'flex', alignItems:'center', gap:'10px', boxShadow:'0 6px 24px rgba(0,0,0,.25)' }}>
+        <div style={{ position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)', zIndex:1000, background:'#1e5b4f', color:'#fff', padding:'12px 20px', borderRadius:'10px', fontSize:'14px', fontWeight:700, display:'flex', alignItems:'center', gap:'10px', boxShadow:'0 6px 24px rgba(0,0,0,.25)', maxWidth:'min(560px, 92vw)', width:'fit-content', boxSizing:'border-box' }}>
           <span style={{ fontSize:'22px' }}>✅</span>
           Documento guardado exitosamente. El builder está listo para un nuevo documento.
           <button onClick={() => setGuardadoExitoso(false)} style={{ marginLeft:'10px', background:'transparent', border:'none', color:'#fff', cursor:'pointer', fontSize:'18px' }}>✕</button>
@@ -93,7 +101,7 @@ export default function App() {
 
       {/* ── Notificación de error de guardado ── */}
       {errorGuardado && (
-        <div style={{ position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)', zIndex:1000, background:'#8b2020', color:'#fff', padding:'14px 24px', borderRadius:'10px', fontSize:'14px', fontWeight:700, display:'flex', alignItems:'center', gap:'10px', boxShadow:'0 6px 24px rgba(0,0,0,.25)', maxWidth:'560px' }}>
+        <div style={{ position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)', zIndex:1000, background:'#8b2020', color:'#fff', padding:'12px 20px', borderRadius:'10px', fontSize:'13px', fontWeight:700, display:'flex', alignItems:'center', gap:'10px', boxShadow:'0 6px 24px rgba(0,0,0,.25)', maxWidth:'min(560px, 92vw)', width:'fit-content', boxSizing:'border-box' }}>
           <span style={{ fontSize:'22px' }}>⚠</span>
           {errorGuardado}
           <button onClick={() => setErrorGuardado('')} style={{ marginLeft:'auto', background:'transparent', border:'none', color:'#fff', cursor:'pointer', fontSize:'18px' }}>✕</button>
@@ -122,6 +130,7 @@ export default function App() {
         onGuardar={handleGuardar}
         onDescargar={handleDescargar}
         onVerDocumento={() => setPantalla('visor')}
+        onEditarDocumento={() => setPantalla('editor')}
         cargando={cargando}
         totalSecciones={secciones.length}
       />

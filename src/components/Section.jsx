@@ -38,7 +38,7 @@ const CHIP_COLORS = {
 
 // ── Preview visual para cada tipo ─────────────────────────
 function PreviewElemento({ elemento }) {
-  const { tipo, contenido, html, align, _fileUrl } = elemento
+  const { tipo, contenido, html, align, _fileUrl, anchorText } = elemento
   const s = { textAlign: align || 'left' }
   if (!contenido && !html) return null
 
@@ -75,7 +75,7 @@ function PreviewElemento({ elemento }) {
         <path d="M8 14l6-6M10.5 7.5l1.5-1.5a3.5 3.5 0 014.95 4.95l-1.5 1.5" stroke="#1e5b4f" strokeWidth="1.8" strokeLinecap="round"/>
         <path d="M11.5 14.5l-1.5 1.5A3.5 3.5 0 015.05 11L6.5 9.5" stroke="#1e5b4f" strokeWidth="1.8" strokeLinecap="round"/>
       </svg>
-      <span className={styles.prevUrlText}>{contenido}</span>
+      <span className={styles.prevUrlText}>{anchorText || contenido}</span>
     </div>
   )
   if (tipo==='mail' && contenido) return (
@@ -102,7 +102,7 @@ function ElemEditor({ elemento, onUpdate, onFileSelected }) {
   if (['ul','ol','ul-ol','hl','note'].includes(tipo))
     return <RichEditor tipo={tipo} html={elemento.html||''} align={elemento.align||info.defAlign||'left'} font={elemento.font||''} cssClases={elemento.cssClases||info.cssClases} hasListBar={info.hasListBar} hasFormatBar={true} placeholder={PH[tipo]||'Escribe aquí...'} onChange={({html,align,font,cssClases})=>onUpdate({html,align,font,cssClases,contenido:new DOMParser().parseFromString(html,'text/html').body.textContent||''})}/>
   if (['url','mail','img','hr'].includes(tipo))
-    return <SimpleFieldEditor tipo={tipo} contenido={elemento.contenido||''} align={elemento.align||info.defAlign||'left'} cssClases={elemento.cssClases||info.cssClases} onChange={({contenido,align,cssClases})=>onUpdate({contenido,align,cssClases})} onFileSelected={tipo==='img'?(file)=>{ onUpdate({contenido:file.name,_fileUrl:URL.createObjectURL(file)}); if(onFileSelected)onFileSelected(file) }:undefined}/>
+    return <SimpleFieldEditor tipo={tipo} contenido={elemento.contenido||''} align={elemento.align||info.defAlign||'left'} cssClases={elemento.cssClases||info.cssClases} anchorText={elemento.anchorText||''} onChange={({contenido,align,cssClases,anchorText})=>onUpdate({contenido,align,cssClases,anchorText})} onFileSelected={tipo==='img'?(file)=>{ onUpdate({contenido:file.name,_fileUrl:URL.createObjectURL(file)}); if(onFileSelected)onFileSelected(file) }:undefined}/>
   return null
 }
 
@@ -163,17 +163,40 @@ function Section({ section, sectionIndex, isOpen, onToggle, onUpdate, onDelete,
   }, [activeSubIdFromPreview, section.subsegmentos])
 
   // preview → abrir elemento individual
+  // FIX: busca el elemento tanto en section.elementos (layout full)
+  // como en section.subsegmentos[i].elementos (layout half/thirds)
   useEffect(() => {
     if (!activeElemIdFromPreview) return
-    const idx = (section.elementos||[]).findIndex(e => e.id === activeElemIdFromPreview)
-    if (idx !== -1) {
-      setActiveElem(idx)
-      setTimeout(() => {
-        const el = document.getElementById(`elemento-${activeElemIdFromPreview}`)
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      }, 60)
+
+    if (section.layout === 'full') {
+      // Layout de columna única: buscar en section.elementos
+      const idx = (section.elementos||[]).findIndex(e => e.id === activeElemIdFromPreview)
+      if (idx !== -1) {
+        setActiveElem(idx)
+        setTimeout(() => {
+          const el = document.getElementById(`elemento-${activeElemIdFromPreview}`)
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }, 60)
+      }
+    } else {
+      // Layout con columnas: buscar en qué subsegmento está el elemento
+      const subs = section.subsegmentos || []
+      for (let si = 0; si < subs.length; si++) {
+        const idx = (subs[si].elementos||[]).findIndex(e => e.id === activeElemIdFromPreview)
+        if (idx !== -1) {
+          // 1. Abrir el subsegmento correcto
+          setActiveSub(si)
+          // 2. El Subsegment recibirá activeElemIdFromPreview via prop
+          //    y abrirá el elemento dentro de él
+          setTimeout(() => {
+            const el = document.getElementById(`elemento-${activeElemIdFromPreview}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+          }, 120)
+          break
+        }
+      }
     }
-  }, [activeElemIdFromPreview, section.elementos])
+  }, [activeElemIdFromPreview, section.layout, section.elementos, section.subsegmentos])
 
   const genId    = () => `elem_${Date.now()}_${Math.floor(Math.random()*1000)}`
   const genSubId = () => `sub_${Date.now()}_${Math.floor(Math.random()*1000)}`
@@ -301,6 +324,7 @@ function Section({ section, sectionIndex, isOpen, onToggle, onUpdate, onDelete,
             <div className={styles.subsegList}>
               {(section.subsegmentos||[]).map((sub,idx)=>(
                 <Subsegment key={sub.id} sub={sub} subIndex={idx}
+                  activeElemIdFromPreview={activeElemIdFromPreview}
                   isOpen={activeSub===idx}
                   onToggle={()=>toggleSub(idx)}
                   onMover={dir=>moverSub(idx,dir)}

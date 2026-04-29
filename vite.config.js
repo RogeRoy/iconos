@@ -1,30 +1,18 @@
-// vite.config.js
-// ─────────────────────────────────────────────────────────────────────────
-// Este archivo configura el servidor de desarrollo de Vite.
-// Agrega dos middlewares (intermediarios) personalizados:
-//
-//   /__devlog  → recibe logs del browser y los muestra en la terminal npm
-//   /__upload  → recibe imágenes del browser y las guarda en public/assets/
-//
-// ¿POR QUÉ NECESITAMOS ESTO?
-//   El browser (Chrome/Firefox) NO puede escribir archivos en el disco por
-//   razones de seguridad. Solo puede leer archivos que el usuario selecciona.
-//   Pero Vite corre en Node.js, que SÍ puede escribir en el sistema de archivos.
-//   Entonces el browser le manda la imagen a Vite via HTTP, y Vite la escribe.
-//
-//   Browser ──POST /__ upload──▶ Vite (Node.js) ──fs.writeFile──▶ public/assets/
-//
-// IMPORTANTE: Esto solo funciona en DESARROLLO (npm run dev).
-//   En producción, el servidor backend (el que tiene la API en puerto 3001)
-//   debería recibir las imágenes y guardarlas en su propio sistema de archivos.
-// ─────────────────────────────────────────────────────────────────────────
-import { defineConfig } from 'vite'
-import react            from '@vitejs/plugin-react'
-import fs               from 'fs'
-import path             from 'path'
+import { defineConfig }    from 'vite'
+import react               from '@vitejs/plugin-react'
+import fs                  from 'fs'
+import path                from 'path'
+import { fileURLToPath }   from 'url'
 
-// ── Plugin 1: devLog ──────────────────────────────────────────────────────
-// Recibe los logs del browser (desde devLog.js) y los imprime en la terminal.
+// ── Obtener el directorio raíz del proyecto ──────────────────────────
+// En ES Modules (import/export), __dirname NO existe.
+// Usamos import.meta.url para obtener la ruta del archivo actual (vite.config.js)
+// y de ahí calculamos el directorio raíz del proyecto.
+const __filename = fileURLToPath(import.meta.url)  // /home/.../build-test/vite.config.js
+const __dirname  = path.dirname(__filename)          // /home/.../build-test/
+
+// ── Plugin 1: devLog ──────────────────────────────────────────────────
+// Recibe logs del browser y los imprime en la terminal de npm.
 function devLogPlugin() {
   return {
     name: 'dev-log',
@@ -37,7 +25,7 @@ function devLogPlugin() {
           try {
             const { level, msg, data } = JSON.parse(body)
             const prefix = level === 'error' ? '\x1b[31m[ERROR]\x1b[0m'
-              : level === 'warn' ? '\x1b[33m[WARN]\x1b[0m'
+              : level === 'warn'  ? '\x1b[33m[WARN]\x1b[0m'
               : '\x1b[36m[LOG]\x1b[0m'
             const extra = data !== undefined
               ? (typeof data === 'string' ? data : JSON.stringify(data, null, 2).slice(0, 600))
@@ -51,19 +39,16 @@ function devLogPlugin() {
   }
 }
 
-// ── Plugin 2: uploadImage ─────────────────────────────────────────────────
-// Recibe imágenes del browser como multipart/form-data y las escribe en disco.
+// ── Plugin 2: uploadImage ──────────────────────────────────────────────
+// Recibe imágenes del browser y las escribe físicamente en disco.
+// Ruta destino: {proyecto}/public/assets/section_images/{bull_id}/{filename}
 //
-// Endpoint: POST /__upload
-// Body: multipart/form-data con los campos:
-//   filename  → nombre final del archivo (ej: secimg_logo_1_20260428_143055.png)
-//   bull_id   → ID del boletín (para crear la subcarpeta)
-//   image     → el archivo binario (el File del browser)
-//
-// Respuesta: { ok: true, url: "/assets/section_images/1/secimg_logo_1_...png" }
-//
-// El archivo queda en: {proyecto}/public/assets/section_images/{bull_id}/{filename}
-// Y es accesible en el browser como: http://localhost:5173/assets/section_images/...
+// FIXES en esta versión:
+//   1. Usar __dirname para calcular la ruta absoluta correcta
+//      (evita el bug de path.resolve resolviendo desde CWD incorrecto)
+//   2. Quitar comillas del boundary si Chrome las incluye
+//      (bug: boundary="----WebKitFormBoundary..." con comillas literales)
+//   3. Logs más detallados para diagnosticar fácilmente
 function uploadImagePlugin() {
   return {
     name: 'upload-image',
@@ -71,58 +56,60 @@ function uploadImagePlugin() {
       server.middlewares.use('/__upload', (req, res) => {
         if (req.method !== 'POST') { res.writeHead(405); res.end(); return }
 
-        // Recopilar los bytes del cuerpo de la petición
-        // req es un stream — los datos llegan en "chunks" (pedazos)
         const chunks = []
         req.on('data', chunk => chunks.push(chunk))
         req.on('end', () => {
           try {
-            // Unir todos los chunks en un solo Buffer (arreglo de bytes)
             const buffer = Buffer.concat(chunks)
 
-            // ── Parsear multipart/form-data manualmente ──────────────────
-            // multipart separa los campos con un "boundary" (delimitador).
-            // El Content-Type se ve así:
-            //   multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-            const contentType = req.headers['content-type'] || ''
-            const boundaryMatch = contentType.match(/boundary=(.+)/)
-            if (!boundaryMatch) throw new Error('Sin boundary en Content-Type')
+            // ── FIX 1: parsear boundary quitando comillas opcionales ──
+            // Chrome a veces envía: boundary="----WebKitFormBoundaryXYZ"
+            // con comillas literales que rompen el parse del multipart.
+            const contentType    = req.headers['content-type'] || ''
+            const boundaryMatch  = contentType.match(/boundary=(.+)/i)
+            if (!boundaryMatch) {
+              console.error('[IMG] ❌ Content-Type sin boundary:', contentType)
+              throw new Error('Sin boundary en Content-Type')
+            }
+            // Quitar comillas dobles si existen: "valor" → valor
+            const boundary = boundaryMatch[1].replace(/^"|"$/g, '').trim()
+            console.log('[IMG] Boundary detectado:', boundary)
 
-            const boundary = boundaryMatch[1].trim()
-            const parsed   = parseMultipart(buffer, boundary)
+            const parsed = parseMultipart(buffer, boundary)
+            console.log('[IMG] Campos recibidos:', Object.keys(parsed.fields))
+            console.log('[IMG] Archivos recibidos:', Object.keys(parsed.files))
 
-            // Obtener los campos del form
             const filename = parsed.fields['filename']
             const bullId   = parsed.fields['bull_id'] || '1'
-            const fileData = parsed.files['image']    // { data: Buffer, filename, contentType }
+            const fileData = parsed.files['image']
 
-            if (!filename || !fileData) throw new Error('Faltan campos filename o image')
+            if (!filename) throw new Error(`Campo 'filename' no encontrado. Campos: ${Object.keys(parsed.fields).join(',')}`)
+            if (!fileData) throw new Error(`Campo 'image' no encontrado. Archivos: ${Object.keys(parsed.files).join(',')}`)
+            if (!fileData.data || fileData.data.length === 0) throw new Error('El archivo de imagen está vacío')
 
-            // ── Crear la carpeta si no existe ────────────────────────────
-            // path.resolve() construye la ruta absoluta desde la raíz del proyecto
-            // __dirname aquí es el directorio de vite.config.js (raíz del proyecto)
-            const carpeta = path.resolve('public', 'assets', 'section_images', String(bullId))
+            // ── FIX 2: usar __dirname para ruta absoluta correcta ──────
+            // __dirname = directorio de vite.config.js = raíz del proyecto
+            // Antes: path.resolve('public', ...) usaba process.cwd() que podía ser '/'
+            const carpeta = path.join(__dirname, 'public', 'assets', 'section_images', String(bullId))
+            console.log('[IMG] Carpeta destino:', carpeta)
+
             if (!fs.existsSync(carpeta)) {
               fs.mkdirSync(carpeta, { recursive: true })
-              console.log(`\x1b[32m[IMG] Carpeta creada: ${carpeta}\x1b[0m`)
+              console.log(`\x1b[32m[IMG] ✅ Carpeta creada: ${carpeta}\x1b[0m`)
             }
 
-            // ── Escribir el archivo en disco ─────────────────────────────
             const rutaArchivo = path.join(carpeta, filename)
             fs.writeFileSync(rutaArchivo, fileData.data)
 
-            // URL relativa que el browser usará para mostrar la imagen
             const url = `/assets/section_images/${bullId}/${filename}`
+            console.log(`\x1b[32m[IMG] ✅ Guardada: ${rutaArchivo} (${fileData.data.length} bytes)\x1b[0m`)
+            console.log(`\x1b[32m[IMG]    URL pública: ${url}\x1b[0m`)
 
-            console.log(`\x1b[32m[IMG] ✅ Guardada: ${rutaArchivo}\x1b[0m`)
-            console.log(`\x1b[32m[IMG]    URL: ${url}\x1b[0m`)
-
-            // Responder con éxito
             res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify({ ok: true, url, filename, path: rutaArchivo }))
+            res.end(JSON.stringify({ ok: true, url, filename, path: rutaArchivo, size: fileData.data.length }))
 
           } catch (err) {
-            console.error(`\x1b[31m[IMG] ❌ Error al guardar imagen: ${err.message}\x1b[0m`)
+            console.error(`\x1b[31m[IMG] ❌ ${err.message}\x1b[0m`)
             res.writeHead(500, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ ok: false, error: err.message }))
           }
@@ -132,74 +119,58 @@ function uploadImagePlugin() {
   }
 }
 
-// ── parseMultipart: parsea el body de un form multipart ──────────────────
-// Esta función entiende el formato multipart/form-data que usa el browser
-// para enviar formularios con archivos.
-//
-// El formato se ve así en bytes:
-//   --boundary\r\n
-//   Content-Disposition: form-data; name="filename"\r\n
-//   \r\n
-//   secimg_logo_1_20260428.png\r\n
-//   --boundary\r\n
-//   Content-Disposition: form-data; name="image"; filename="logo.png"\r\n
-//   Content-Type: image/png\r\n
-//   \r\n
-//   [bytes de la imagen]
-//   --boundary--
-//
-// Retorna: { fields: { filename: "...", bull_id: "1" }, files: { image: { data, filename, contentType } } }
+// ── parseMultipart ─────────────────────────────────────────────────────
+// Parsea manualmente el cuerpo multipart/form-data.
+// Extrae campos de texto (fields) y archivos binarios (files).
 function parseMultipart(buffer, boundary) {
   const fields = {}
   const files  = {}
 
-  // Convertir el boundary a bytes para buscarlo en el buffer binario
-  const boundaryBuf = Buffer.from('--' + boundary)
-  const CRLF        = Buffer.from('\r\n')
-  const CRLFCRLF    = Buffer.from('\r\n\r\n')
+  const sep      = Buffer.from('--' + boundary)
+  const CRLF     = '\r\n'
+  const CRLFCRLF = '\r\n\r\n'
 
   let pos = 0
-
-  // Buscar cada parte del multipart
   while (pos < buffer.length) {
-    // Buscar el inicio del próximo boundary
-    const bPos = buffer.indexOf(boundaryBuf, pos)
+    const bPos = buffer.indexOf(sep, pos)
     if (bPos === -1) break
-    pos = bPos + boundaryBuf.length + 2  // saltar el boundary + CRLF
 
-    // Buscar el doble CRLF que separa los headers del contenido
-    const headerEnd = buffer.indexOf(CRLFCRLF, pos)
-    if (headerEnd === -1) break
+    pos = bPos + sep.length
 
-    // Extraer los headers de esta parte
-    const headerStr = buffer.slice(pos, headerEnd).toString('utf8')
-    pos = headerEnd + 4  // saltar el \r\n\r\n
+    // Fin del multipart: -- al final
+    if (buffer[pos] === 0x2D && buffer[pos+1] === 0x2D) break
 
-    // Buscar el siguiente boundary para saber dónde termina el contenido
-    const nextBoundary = buffer.indexOf(boundaryBuf, pos)
-    const contentEnd   = nextBoundary === -1 ? buffer.length : nextBoundary - 2  // -2 por el CRLF antes del boundary
+    // Saltar CRLF después del boundary
+    if (buffer[pos] === 0x0D && buffer[pos+1] === 0x0A) pos += 2
 
-    // El contenido es el slice entre pos y contentEnd
-    const content = buffer.slice(pos, contentEnd)
-    pos = nextBoundary === -1 ? buffer.length : nextBoundary
+    // Buscar el doble CRLF que separa headers del contenido
+    const headerEndIdx = buffer.indexOf(CRLFCRLF, pos)
+    if (headerEndIdx === -1) break
 
-    // Parsear los headers para saber el nombre del campo y si es archivo
-    const dispositionMatch = headerStr.match(/Content-Disposition:[^\r\n]*name="([^"]+)"/)
-    const filenameMatch    = headerStr.match(/Content-Disposition:[^\r\n]*filename="([^"]+)"/)
-    const ctypeMatch       = headerStr.match(/Content-Type:\s*([^\r\n]+)/)
+    const headerStr = buffer.slice(pos, headerEndIdx).toString('utf8')
+    pos = headerEndIdx + 4
 
-    if (!dispositionMatch) continue
-    const fieldName = dispositionMatch[1]
+    // Buscar el siguiente boundary para delimitar el contenido
+    const nextSep  = buffer.indexOf(sep, pos)
+    const endPos   = nextSep !== -1 ? nextSep - 2 : buffer.length  // -2 por CRLF antes del boundary
+    const content  = buffer.slice(pos, endPos)
+    pos = nextSep !== -1 ? nextSep : buffer.length
 
-    if (filenameMatch) {
-      // Es un archivo binario
+    // Parsear headers de esta parte
+    const dispMatch = headerStr.match(/content-disposition[^;]*;[^]*?name="([^"]+)"/i)
+    const fileMatch = headerStr.match(/filename="([^"]+)"/i)
+    const ctMatch   = headerStr.match(/content-type:\s*([^\r\n]+)/i)
+
+    if (!dispMatch) continue
+    const fieldName = dispMatch[1]
+
+    if (fileMatch) {
       files[fieldName] = {
         data:        content,
-        filename:    filenameMatch[1],
-        contentType: ctypeMatch ? ctypeMatch[1].trim() : 'application/octet-stream',
+        filename:    fileMatch[1],
+        contentType: ctMatch ? ctMatch[1].trim() : 'application/octet-stream',
       }
     } else {
-      // Es un campo de texto
       fields[fieldName] = content.toString('utf8')
     }
   }

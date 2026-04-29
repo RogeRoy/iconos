@@ -14,7 +14,11 @@ function buildJson(secciones) {
     const makeRow = (elem, subN, subName) => {
       const info = findType(elem.tipo)
       let path_id=null, path_desc=null
-      if (elem.tipo==='url'  && elem.contenido) { path_id=0; path_desc=elem.contenido }
+      if (elem.tipo==='url'  && elem.contenido) {
+        path_id=0
+        path_desc=elem.contenido  // URL real → resource_desc
+        // Si hay anchorText, va a section_content; si no, la URL misma
+      }
       if (elem.tipo==='mail' && elem.contenido) { path_id=0; path_desc=`mailto:${elem.contenido}` }
       if (elem.tipo==='img'  && elem.contenido) { path_id=0; path_desc=elem.contenido }
       const cssClases = buildCss(elem.tipo, elem.align||info.defAlign||'left', elem.font||'')
@@ -23,7 +27,12 @@ function buildJson(secciones) {
         seg_name:segName, sub_name:subN>0?(subName||`Columna ${subN}`):null,
         type:elem.tipo, align:elem.align||info.defAlign||'',
         section_css:cssClases, section_html:elem.html||info.htmlTag||'div',
-        section_content:elem.contenido||'', path_id, path_desc,
+        // Para URL: section_content = anchorText si existe, si no la URL
+        // Para los demás: el contenido normal
+        section_content: (elem.tipo==='url' && elem.anchorText)
+          ? elem.anchorText
+          : (elem.contenido||''),
+        path_id, path_desc,
         _meta_type:elem.tipo, _meta_align:elem.align||info.defAlign||'',
         _meta_seg_name:segName, _meta_sub_name:subN>0?(subName||`Columna ${subN}`):null,
       }
@@ -114,6 +123,8 @@ const BuilderPanel = forwardRef(function BuilderPanel({
   useImperativeHandle(ref, () => ({
     agregarSeccion,
     buildJsonActual: () => secciones.length ? buildJson(secciones) : null,
+    // NUEVO: exponer el mapa de imágenes para que App.jsx lo pase al guardar
+    getImagenes: () => archivosImagenRef.current,
   }), [agregarSeccion, secciones])
 
   return (
