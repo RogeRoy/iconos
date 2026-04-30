@@ -1,141 +1,153 @@
-import { useState, useCallback, useRef } from 'react'
-import BuilderPanel     from './components/BuilderPanel'
-import PreviewPanel     from './components/PreviewPanel'
-import FloatingToolbar  from './components/FloatingToolbar'
-import ErrorBoundary    from './components/ErrorBoundary'
-import VisorDocumento   from './components/VisorDocumento'
-import EditorBoletín  from './components/EditorBoletín'
-import { useGuardarBoletin } from './hooks/useGuardarBoletin'
+// ─────────────────────────────────────────────────────────────────────────
+// App.jsx — v2  (usa useBuilderState, agrega toggle de panel en móvil)
+// ─────────────────────────────────────────────────────────────────────────
+//
+// CAMBIOS EN ESTA VERSIÓN:
+//
+//   1. useBuilderState() reemplaza ~40 líneas de código duplicado.
+//      Todo el estado y los handlers vienen del hook.
+//      El componente solo se ocupa de QUÉ MOSTRAR, no de la lógica.
+//
+//   2. activeNav (objeto único) reemplaza 3 estados separados:
+//      ANTES: activeSectionId, activeSubId, activeElemId (3 setStates)
+//      AHORA: activeNav.secId, activeNav.subId, activeNav.elemId (1 setState)
+//
+//   3. Estado de panel para móvil: 'builder' | 'preview'
+//      En pantallas pequeñas solo se muestra UN panel a la vez.
+//      El botón flotante extra permite cambiar entre ellos.
+//      Esto soluciona el responsive incompleto en móvil.
+//
+// ─────────────────────────────────────────────────────────────────────────
+
+import { useState } from 'react'
+import BuilderPanel    from './components/BuilderPanel'
+import PreviewPanel    from './components/PreviewPanel'
+import FloatingToolbar from './components/FloatingToolbar'
+import ErrorBoundary   from './components/ErrorBoundary'
+import VisorDocumento  from './components/VisorDocumento'
+import EditorBoletín   from './components/EditorBoletín'
+import { useBuilderState } from './hooks/useBuilderState'
 import './App.css'
 
-function getSufijoDeFecha() {
-  const n=new Date(); const p=x=>String(x).padStart(2,'0')
-  return `_${n.getFullYear()}${p(n.getMonth()+1)}${p(n.getDate())}_${p(n.getHours())}${p(n.getMinutes())}${p(n.getSeconds())}`
-}
-function descargarJson(datos, nombre='boletin') {
-  const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'})
-  const url=URL.createObjectURL(blob); const a=document.createElement('a')
-  a.href=url; a.download=`${nombre}${getSufijoDeFecha()}.json`
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url)
-}
-
 export default function App() {
-  // 'builder' | 'visor'
-  const [pantalla, setPantalla] = useState('builder')  // 'builder' | 'visor' | 'editor'
+  // ── Pantalla activa ────────────────────────────────────────────────
+  // 'builder' → pantalla principal de creación de documentos
+  // 'visor'   → pantalla de visualización del documento publicado
+  // 'editor'  → pantalla de edición de boletín existente
+  const [pantalla, setPantalla] = useState('builder')
 
-  const [secciones,       setSecciones]       = useState([])
-  const [activeSectionId, setActiveSectionId] = useState(null)
-  const [activeSubId,     setActiveSubId]     = useState(null)
-  const [activeElemId,    setActiveElemId]    = useState(null)
-  const [previewScrollId, setPreviewScrollId] = useState(null)
+  // ── Panel visible en móvil ────────────────────────────────────────
+  // En móvil (< 768px) solo se muestra un panel a la vez.
+  // 'builder' | 'preview'
+  // El CSS oculta el panel que no está activo usando la clase .panelOculto.
+  const [panelMovil, setPanelMovil] = useState('builder')
 
-  // Estados de guardado exitoso / error
-  const [guardadoExitoso, setGuardadoExitoso] = useState(false)
-  const [errorGuardado,   setErrorGuardado]   = useState('')
+  // ── Toda la lógica del builder viene del hook ─────────────────────
+  // useBuilderState devuelve todos los estados y funciones necesarios.
+  // Si necesitas cambiar algo de la lógica, solo tienes que ir a
+  // hooks/useBuilderState.js — ya no hay lógica dispersa aquí.
+  const {
+    secciones,
+    setSecciones,
+    activeNav,
+    previewScrollId,
+    builderRef,
+    guardadoExitoso,
+    errorGuardado,
+    cargandoGuardado,
+    handleNavegar,
+    handleElementoAbierto,
+    handleSeccionesChange,
+    handleAgregarSeccion,
+    handleGuardar,
+    handleDescargar,
+    limpiarNotificaciones,
+  } = useBuilderState()
 
-  const builderRef = useRef(null)
-  const { guardar, cargando } = useGuardarBoletin()
-
-  const handleNavegar = useCallback(({ tipo, id, secId, subId }) => {
-    if (tipo === 'elemento') {
-      setActiveSectionId(secId || null); setActiveSubId(subId || null); setActiveElemId(id)
-    } else if (tipo === 'subsegmento') {
-      setActiveSectionId(secId); setActiveSubId(id); setActiveElemId(null)
-    } else {
-      setActiveSectionId(id); setActiveSubId(null); setActiveElemId(null)
-    }
-  }, [])
-
-  const handleElementoAbierto = useCallback((elemId) => {
-    setPreviewScrollId(elemId)
-    setTimeout(() => setPreviewScrollId(null), 400)
-  }, [])
-
-  const handleSeccionesChange = useCallback((fn) => setSecciones(fn), [])
-  const handleAgregarSeccion = useCallback(() => builderRef.current?.agregarSeccion(), [])
-
-  const handleGuardar = useCallback(async () => {
-    const flat     = builderRef.current?.buildJsonActual?.()
-    const imagenes = builderRef.current?.getImagenes?.() || {}
-    if (!flat) return
-    setGuardadoExitoso(false); setErrorGuardado('')
-    console.log('[GUARDAR] Imágenes a subir:', Object.keys(imagenes).length, Object.keys(imagenes))
-    try {
-      await guardar(flat, imagenes)
-      // ✅ Guardado exitoso: mostrar mensaje y limpiar el builder
-      setGuardadoExitoso(true)
-      setSecciones([])  // vaciar el builder
-      setTimeout(() => setGuardadoExitoso(false), 5000)
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Error desconocido'
-      setErrorGuardado(`Hubo un problema al guardar. Por favor consulta al administrador. (${msg})`)
-      console.error('[GUARDAR] Error completo:', err)
-    }
-  }, [guardar])
-
-  const handleDescargar = useCallback(() => {
-    const flat = builderRef.current?.buildJsonActual?.()
-    if (flat) descargarJson(flat, 'boletin')
-  }, [])
-
-  // Pantalla del visor
+  // ── Pantalla del visor ─────────────────────────────────────────────
   if (pantalla === 'visor') {
     return <VisorDocumento onVolver={() => setPantalla('builder')} />
   }
 
-  // Pantalla del editor de boletines existentes
+  // ── Pantalla del editor de boletines existentes ───────────────────
   if (pantalla === 'editor') {
     return <EditorBoletín onVolver={() => setPantalla('builder')} />
   }
 
   return (
     <div className="app-layout">
-      {/* ── Notificación de guardado exitoso ── */}
+
+      {/* ── Notificación de guardado exitoso ─────────────────────── */}
       {guardadoExitoso && (
-        <div style={{ position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)', zIndex:1000, background:'#1e5b4f', color:'#fff', padding:'12px 20px', borderRadius:'10px', fontSize:'14px', fontWeight:700, display:'flex', alignItems:'center', gap:'10px', boxShadow:'0 6px 24px rgba(0,0,0,.25)', maxWidth:'min(560px, 92vw)', width:'fit-content', boxSizing:'border-box' }}>
+        <div style={{
+          position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)',
+          zIndex:1000, background:'#1e5b4f', color:'#fff',
+          padding:'12px 20px', borderRadius:'10px', fontSize:'14px',
+          fontWeight:700, display:'flex', alignItems:'center', gap:'10px',
+          boxShadow:'0 6px 24px rgba(0,0,0,.25)',
+          maxWidth:'min(560px, 92vw)', width:'fit-content', boxSizing:'border-box',
+        }}>
           <span style={{ fontSize:'22px' }}>✅</span>
           Documento guardado exitosamente. El builder está listo para un nuevo documento.
-          <button onClick={() => setGuardadoExitoso(false)} style={{ marginLeft:'10px', background:'transparent', border:'none', color:'#fff', cursor:'pointer', fontSize:'18px' }}>✕</button>
+          <button
+            onClick={limpiarNotificaciones}
+            style={{ marginLeft:'10px', background:'transparent', border:'none', color:'#fff', cursor:'pointer', fontSize:'18px' }}
+          >✕</button>
         </div>
       )}
 
-      {/* ── Notificación de error de guardado ── */}
+      {/* ── Notificación de error de guardado ────────────────────── */}
       {errorGuardado && (
-        <div style={{ position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)', zIndex:1000, background:'#8b2020', color:'#fff', padding:'12px 20px', borderRadius:'10px', fontSize:'13px', fontWeight:700, display:'flex', alignItems:'center', gap:'10px', boxShadow:'0 6px 24px rgba(0,0,0,.25)', maxWidth:'min(560px, 92vw)', width:'fit-content', boxSizing:'border-box' }}>
+        <div style={{
+          position:'fixed', top:'16px', left:'50%', transform:'translateX(-50%)',
+          zIndex:1000, background:'#8b2020', color:'#fff',
+          padding:'12px 20px', borderRadius:'10px', fontSize:'13px',
+          fontWeight:700, display:'flex', alignItems:'center', gap:'10px',
+          boxShadow:'0 6px 24px rgba(0,0,0,.25)',
+          maxWidth:'min(560px, 92vw)', width:'fit-content', boxSizing:'border-box',
+        }}>
           <span style={{ fontSize:'22px' }}>⚠</span>
           {errorGuardado}
-          <button onClick={() => setErrorGuardado('')} style={{ marginLeft:'auto', background:'transparent', border:'none', color:'#fff', cursor:'pointer', fontSize:'18px' }}>✕</button>
+          <button
+            onClick={limpiarNotificaciones}
+            style={{ marginLeft:'auto', background:'transparent', border:'none', color:'#fff', cursor:'pointer', fontSize:'18px' }}
+          >✕</button>
         </div>
       )}
 
-      <div className="app-builder">
+      {/* ── Panel del builder ─────────────────────────────────────── */}
+      {/* La clase .panelOcultoMovil se activa en móvil cuando panelMovil !== 'builder' */}
+      <div
+        className={`app-builder${panelMovil !== 'builder' ? ' panel-oculto-movil' : ''}`}
+      >
         <ErrorBoundary>
           <BuilderPanel
             ref={builderRef}
             seccionesExternas={secciones}
             onSeccionesChange={handleSeccionesChange}
-            activeSectionIdExterno={activeSectionId}
-            onActiveSectionChange={setActiveSectionId}
-            activeSubIdExterno={activeSubId}
-            onActiveSubChange={setActiveSubId}
-            activeElemIdExterno={activeElemId}
-            onActiveElemChange={setActiveElemId}
+            activeNavExterno={activeNav}
             onElementoAbierto={handleElementoAbierto}
           />
         </ErrorBoundary>
       </div>
 
+      {/* ── Toolbar flotante ─────────────────────────────────────── */}
       <FloatingToolbar
         onAgregarSeccion={handleAgregarSeccion}
         onGuardar={handleGuardar}
         onDescargar={handleDescargar}
         onVerDocumento={() => setPantalla('visor')}
         onEditarDocumento={() => setPantalla('editor')}
-        cargando={cargando}
+        cargando={cargandoGuardado}
         totalSecciones={secciones.length}
+        panelMovil={panelMovil}
+        onTogglePanelMovil={() => setPanelMovil(p => p === 'builder' ? 'preview' : 'builder')}
       />
 
-      <div className="app-preview">
+      {/* ── Panel del preview ────────────────────────────────────── */}
+      <div
+        className={`app-preview${panelMovil !== 'preview' ? ' panel-oculto-movil' : ''}`}
+      >
         <ErrorBoundary>
           <PreviewPanel
             secciones={secciones}

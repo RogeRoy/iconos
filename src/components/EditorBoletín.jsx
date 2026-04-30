@@ -15,7 +15,7 @@ import ErrorBoundary   from './ErrorBoundary'
 import { apiRowsToSecciones } from '../utils/apiToBuilder'
 import { useGuardarBoletin }  from '../hooks/useGuardarBoletin'
 
-const TOKEN   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzQ3NTQyNywiZXhwIjoxNzc3NTA0MjI3fQ.sQxW0L6uH1Ln5mTMCk5_OIzHQvvf2564RRdVA0HxUuo'
+const TOKEN   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzUwODI0NCwiZXhwIjoxNzc3NTM3MDQ0fQ.naEZDKTjT6nvk2iLu0ZTkMbbHpNKKrtgS7S_y3YlK0k'
 const BASE_URL = 'http://localhost:3001'
 
 function getSufijoDeFecha() {

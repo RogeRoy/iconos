@@ -1,4 +1,6 @@
-/* FloatingToolbar.module.css — v2 con estado colapsado */
+/* FloatingToolbar.module.css — v3
+   NUEVO: .fabTogglePanel — visible solo en móvil (≤ 768px)
+*/
 
 /* ── Estado EXPANDIDO (normal) ── */
 .fab {
@@ -21,7 +23,6 @@
 }
 
 /* ── Estado COLAPSADO ── */
-/* Solo muestra el botón toggle + contador, muy compacto */
 .fabColapsado {
   padding: 8px 6px;
   border-radius: 100px;
@@ -34,14 +35,36 @@
   padding: 6px 10px;
   min-width: 40px;
   gap: 4px;
-  flex-direction: row;  /* ícono + contador en fila */
+  flex-direction: row;
 }
 .fabToggle:hover:not(:disabled) {
   color: #e6d194;
   background: rgba(230,209,148,.15) !important;
 }
 
-/* Contador inline dentro del toggle (visible cuando está colapsado) */
+/* ── NUEVO: Botón toggle builder/preview ──────────────────────────────
+   En desktop (> 768px): OCULTO — los dos paneles siempre son visibles.
+   En móvil (≤ 768px): VISIBLE — permite cambiar entre paneles.
+   Usa un color dorado más brillante para distinguirlo visualmente.
+   ─────────────────────────────────────────────────────────────────── */
+.fabTogglePanel {
+  /* Por defecto oculto en desktop */
+  display: none;
+  color: #e6d194;
+  background: rgba(165,127,44,.2);
+  border: 1px solid rgba(165,127,44,.4);
+  border-radius: 10px;
+  padding: 8px 12px;
+  min-width: 56px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.fabTogglePanel:hover:not(:disabled) {
+  background: rgba(165,127,44,.35) !important;
+}
+
+/* Contador inline dentro del toggle */
 .counterInline {
   font-size: 11px;
   font-weight: 900;
@@ -114,13 +137,21 @@
     padding: 8px 16px;
     gap: 0;
   }
-  .fabColapsado {
-    padding: 8px 14px;
-  }
+  .fabColapsado { padding: 8px 14px; }
   .sep { width: 1px; height: 34px; margin: 0 4px; }
   .fabBtn { min-width: 48px; padding: 8px 10px; }
   .fabLabel { font-size: 8px; }
   .fabToggle { flex-direction: row; }
+}
+
+/* ══════════════════════════════════════════════════════
+   MÓVIL (≤ 768px): mostrar el botón de toggle de panel
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Mostrar el botón que en desktop estaba oculto */
+  .fabTogglePanel {
+    display: flex;  /* activar el botón */
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -131,4 +162,6 @@
   .fabBtn { min-width: 40px; padding: 6px 8px; }
   .fabLabel { display: none; }
   .counterInline { min-width: 16px; height: 16px; font-size: 10px; }
+  /* En teléfonos muy pequeños mantener el label del toggle visible */
+  .fabTogglePanel .fabLabel { display: flex; }
 }

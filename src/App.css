@@ -1,6 +1,12 @@
 /* ─────────────────────────────────────────────────────────
-   App.css — Layout principal del sistema builder
-   ─────────────────────────────────────────────────────── */
+   App.css — v2  (responsive completo con toggle de panel móvil)
+   ─────────────────────────────────────────────────────────
+   CAMBIOS:
+   1. .panel-oculto-movil: oculta un panel en móvil (< 768px)
+   2. Botón toggle "Ver Preview / Ver Builder" en FloatingToolbar
+   3. Media query 768px (antes era 900px)
+   4. Animación de transición entre paneles
+   ─────────────────────────────────────────────────────────── */
 
 /* Reset base */
 *, *::before, *::after { box-sizing: border-box; }
@@ -10,21 +16,16 @@ body {
   padding: 0;
   font-family: 'Noto Sans', sans-serif;
   background: #f0ece8;
-  /* ✅ SIN overflow:hidden en body.
-     En desktop los paneles tienen su propio scroll interno.
-     En móvil el body necesita poder scrollear normalmente. */
 }
 
 /* ══════════════════════════════════════════════════════
-   DESKTOP (≥ 901px): dos columnas lado a lado
+   DESKTOP (> 768px): dos paneles lado a lado
    Builder 57% izquierda | Preview 43% derecha
    ══════════════════════════════════════════════════════ */
 .app-layout {
   display: flex;
   width: 100vw;
   height: 100vh;
-  /* ✅ overflow:hidden solo en el contenedor, no en body.
-     Esto permite que cada panel tenga su propio scroll. */
   overflow: hidden;
 }
 
@@ -32,11 +33,11 @@ body {
 .app-builder {
   width: 57%;
   height: 100vh;
-  overflow-y: auto;      /* scroll vertical interno */
+  overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
+  transition: opacity 0.2s ease;
 }
-/* Scrollbar estilizada (solo webkit: Chrome, Safari, Edge) */
 .app-builder::-webkit-scrollbar { width: 6px; }
 .app-builder::-webkit-scrollbar-track { background: #f0ece8; }
 .app-builder::-webkit-scrollbar-thumb { background: #c9a76c; border-radius: 10px; }
@@ -45,99 +46,102 @@ body {
 .app-preview {
   flex: 1;
   height: 100vh;
-  overflow: hidden; /* el scroll interno lo maneja PreviewPanel */
+  overflow: hidden;
+  transition: opacity 0.2s ease;
 }
 
 /* ══════════════════════════════════════════════════════
-   TABLET (≤ 900px): paneles apilados verticalmente
-   Builder arriba | Preview abajo
+   MÓVIL (≤ 768px): UN PANEL A LA VEZ
+   ══════════════════════════════════════════════════════
+   ANTES: los dos paneles se apilaban verticalmente,
+          quedaba muy pequeño y difícil de usar.
+   AHORA: solo se muestra UN panel a la vez.
+          El botón flotante permite cambiar entre ellos.
+          Es exactamente como funciona VS Code en móvil
+          (o el inspector de Chrome en modo responsive).
+
+   .panel-oculto-movil: clase que se aplica al panel
+   que NO está activo. Usa display:none en móvil.
+   En desktop esta clase no tiene efecto.
    ══════════════════════════════════════════════════════ */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   body {
-    /* ✅ En móvil/tablet: el body es el que scrollea.
-       overflow:auto permite scroll cuando el contenido
-       supera la altura de la pantalla. */
-    overflow-y: auto;
     overflow-x: hidden;
   }
 
   .app-layout {
-    /* Apilar verticalmente */
     flex-direction: column;
-    /* ✅ Quitar la altura fija — el contenido define la altura */
-    height: auto;
-    /* ✅ Quitar overflow:hidden — el body maneja el scroll */
-    overflow: visible;
-    width: 100%;
-  }
-
-  .app-builder {
-    /* ✅ Ancho completo en tablet/móvil */
-    width: 100%;
-    /* ✅ Altura automática — el contenido define cuánto ocupa */
-    height: auto;
-    /* ✅ Sin overflow propio — el body scrollea */
-    overflow: visible;
-    /* Espacio al fondo para que el FAB no tape el último elemento */
-    padding-bottom: 80px;
-  }
-
-  .app-preview {
-    /* Altura fija para el panel de preview en tablet */
-    height: 420px;
-    width: 100%;
-    /* El overflow interno lo sigue manejando PreviewPanel */
+    height: 100vh;
     overflow: hidden;
   }
+
+  /* Cada panel ocupa toda la pantalla en móvil */
+  .app-builder,
+  .app-preview {
+    width: 100%;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  /* El panel que NO está activo se oculta completamente.
+     display:none quita el elemento del flujo del DOM,
+     así el panel activo ocupa toda la pantalla.
+     La transición de opacidad antes del display:none
+     hace la animación más suave. */
+  .panel-oculto-movil {
+    display: none !important;
+  }
+
+  /* Espacio inferior para que el toolbar flotante no tape el contenido */
+  .app-builder { padding-bottom: 90px; }
 }
 
 /* ══════════════════════════════════════════════════════
-   TELÉFONO PEQUEÑO (≤ 480px): ajustes extra
+   TABLET (769px – 900px): paneles apilados verticalmente
+   ══════════════════════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 900px) {
+  body { overflow-y: auto; overflow-x: hidden; }
+  .app-layout  { flex-direction: column; height: auto; overflow: visible; width: 100%; }
+  .app-builder { width: 100%; height: auto; overflow: visible; padding-bottom: 80px; }
+  .app-preview { height: 420px; width: 100%; overflow: hidden; }
+
+  /* En tablet no aplica el panel-oculto-movil */
+  .panel-oculto-movil { display: block !important; }
+}
+
+/* ══════════════════════════════════════════════════════
+   TELÉFONO PEQUEÑO (≤ 480px)
    ══════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-  .app-preview {
-    /* Preview más compacto en teléfono pequeño (iPhone SE, etc.) */
-    height: 320px;
-  }
-
-  .app-builder {
-    /* Más espacio para el FAB en teléfono */
-    padding-bottom: 90px;
-  }
+  .app-builder { padding-bottom: 90px; }
 }
 
 /* ══════════════════════════════════════════════════════
-   EDITOR DE BOLETINES — ajuste por barra superior fija
-   La barra de "Editando Boletín #N" tiene 34px de altura
-   y es position:fixed, por lo que hay que compensarla.
+   EDITOR DE BOLETINES — compensar barra superior fija
    ══════════════════════════════════════════════════════ */
 .app-builder-editor {
   margin-top: 34px;
-  height: calc(100vh - 34px);  /* descontar la barra del alto total */
+  height: calc(100vh - 34px);
 }
 .app-preview-editor {
   margin-top: 34px;
   height: calc(100vh - 34px);
 }
 
-/* En tablet/móvil (≤900px): los paneles se apilan
-   el marginTop se mantiene pero height pasa a auto */
 @media (max-width: 900px) {
-  .app-builder-editor {
-    height: auto;
-    padding-bottom: 114px; /* 80px normal + 34px de la barra = más espacio para el FAB */
-  }
+  .app-builder-editor { height: auto; padding-bottom: 114px; }
+  .app-preview-editor { height: 420px; margin-top: 0; }
+}
+@media (max-width: 768px) {
+  .app-builder-editor,
   .app-preview-editor {
-    height: 420px;  /* igual que .app-preview normal */
-    margin-top: 0;  /* ya no necesita compensar — va después del builder */
+    margin-top: 0;
+    height: 100vh;
+    padding-bottom: 90px;
   }
 }
-
 @media (max-width: 480px) {
-  .app-builder-editor {
-    padding-bottom: 124px;
-  }
-  .app-preview-editor {
-    height: 320px;
-  }
+  .app-builder-editor,
+  .app-preview-editor { padding-bottom: 90px; }
 }

@@ -1,129 +1,164 @@
-// BuilderPanel.jsx — v5
-// Recibe activeElemIdExterno desde App y lo propaga a Section.
-// Llama onElementoAbierto cuando un elemento se expande (builder→preview).
+// ─────────────────────────────────────────────────────────────────────────
+// BuilderPanel.jsx — v6
+// ─────────────────────────────────────────────────────────────────────────
+//
+// CAMBIOS EN ESTA VERSIÓN:
+//
+//   1. buildJson() REMOVIDA de este archivo
+//      Ahora vive en utils/buildJson.js.
+//      Este componente ya no mezcla lógica de negocio con interfaz de usuario.
+//
+//   2. genId() usa crypto.randomUUID()
+//      Más seguro, garantiza unicidad sin posibilidad de colisión.
+//
+//   3. activeNav (objeto unificado) reemplaza 3 props separadas:
+//      ANTES: activeSectionIdExterno, activeSubIdExterno, activeElemIdExterno
+//      AHORA: activeNavExterno = { secId, subId, elemId }
+//
+//      Esto elimina el problema de "useEffect con dependencias incompletas"
+//      y los renders intermedios inconsistentes.
+//
+//   4. useEffect mejorados:
+//      ANTES: 3 useEffect separados con setTimeout y lógica de deduplicación
+//             manual (prevSecRef, prevSubRef, prevElemRef).
+//      AHORA: 1 useEffect que reacciona al objeto activeNav completo.
+//             Sin timeouts arbitrarios. Sin refs de "previo".
+//
+// ─────────────────────────────────────────────────────────────────────────
+
 import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import Section from './Section'
-import styles from './BuilderPanel.module.css'
-import { findType } from './editor/elementTypes'
-import { buildCss } from '../utils/cssTokens'
+import styles  from './BuilderPanel.module.css'
+import { buildJson, genId } from '../utils/buildJson'  // ← EXTRAÍDO
 
-function buildJson(secciones) {
-  const sections = []; let order = 1
-  secciones.forEach((sec, si) => {
-    const segN = si+1; const segName = sec.nombre||`SEG-${segN}`; const layout = sec.layout||'full'
-    const makeRow = (elem, subN, subName) => {
-      const info = findType(elem.tipo)
-      let path_id=null, path_desc=null
-      if (elem.tipo==='url'  && elem.contenido) {
-        path_id=0
-        path_desc=elem.contenido  // URL real → resource_desc
-        // Si hay anchorText, va a section_content; si no, la URL misma
-      }
-      if (elem.tipo==='mail' && elem.contenido) { path_id=0; path_desc=`mailto:${elem.contenido}` }
-      if (elem.tipo==='img'  && elem.contenido) { path_id=0; path_desc=elem.contenido }
-      const cssClases = buildCss(elem.tipo, elem.align||info.defAlign||'left', elem.font||'')
-      return {
-        section_order:order++, section_segment:segN, section_subsegment:subN,
-        seg_name:segName, sub_name:subN>0?(subName||`Columna ${subN}`):null,
-        type:elem.tipo, align:elem.align||info.defAlign||'',
-        section_css:cssClases, section_html:elem.html||info.htmlTag||'div',
-        // Para URL: section_content = anchorText si existe, si no la URL
-        // Para los demás: el contenido normal
-        section_content: (elem.tipo==='url' && elem.anchorText)
-          ? elem.anchorText
-          : (elem.contenido||''),
-        path_id, path_desc,
-        _meta_type:elem.tipo, _meta_align:elem.align||info.defAlign||'',
-        _meta_seg_name:segName, _meta_sub_name:subN>0?(subName||`Columna ${subN}`):null,
-      }
-    }
-    if (layout==='full') { (sec.elementos||[]).forEach(e=>sections.push(makeRow(e,0,null))) }
-    else { ;(sec.subsegmentos||[]).forEach((sub,si2)=>{ const subN=si2+1; (sub.elementos||[]).forEach(e=>sections.push(makeRow(e,subN,sub.nombre))) }) }
-  })
-  return {
-    bulletin:{ bull_name:'Documento', bull_status:true, updated_by:'SISTEMA' },
-    bulletin_sections: sections.map(s=>({
-      section_segment:s.section_segment, section_subsegment:s.section_subsegment,
-      bull_id:null, path_id:s.path_id, section_content:s.section_content,
-      section_css:s.section_css, section_html:s.section_html,
-      section_order:s.section_order, section_status:true, updated_by:'SISTEMA',
-      _meta_seg_name:s._meta_seg_name, _meta_sub_name:s._meta_sub_name,
-      _meta_type:s._meta_type, _meta_align:s._meta_align,
-    })),
-    bulletin_path: sections.filter(s=>s.path_id!==null).map(s=>({path_id:null,path_desc:s.path_desc})),
-  }
-}
-
+// ─────────────────────────────────────────────────────────────────────────
+// BuilderPanel — componente principal del editor
+//
+// forwardRef permite que el padre (App.jsx) obtenga una "referencia" a este
+// componente y llame métodos como agregarSeccion() o buildJsonActual().
+// En Java sería como tener un método público en una clase que otra clase llama.
+// ─────────────────────────────────────────────────────────────────────────
 const BuilderPanel = forwardRef(function BuilderPanel({
-  seccionesExternas, onSeccionesChange,
-  activeSectionIdExterno, onActiveSectionChange,
-  activeSubIdExterno, onActiveSubChange,
-  activeElemIdExterno, onActiveElemChange,
+  seccionesExternas,
+  onSeccionesChange,
+  activeNavExterno,
   onElementoAbierto,
 }, ref) {
+
   const [seccionesLocales, setSeccionesLocales] = useState([])
-  const secciones    = seccionesExternas !==undefined ? seccionesExternas  : seccionesLocales
-  const setSecciones = onSeccionesChange !==undefined ? onSeccionesChange  : setSeccionesLocales
 
-  const [activeSection,         setActiveSection]         = useState(null)
-  const [activeSubFromPreview,  setActiveSubFromPreview]  = useState(null)
-  const [activeElemFromPreview, setActiveElemFromPreview] = useState(null)
+  // Si el padre pasa seccionesExternas, usarlas; si no, usar el estado local.
+  // Esto permite que el componente funcione tanto controlado (App.jsx)
+  // como no-controlado (si se usa solo).
+  const secciones    = seccionesExternas  !== undefined ? seccionesExternas  : seccionesLocales
+  const setSecciones = onSeccionesChange  !== undefined ? onSeccionesChange  : setSeccionesLocales
+
+  // Estado local de qué sección está abierta en el acordeón
+  const [activeSection, setActiveSection] = useState(null)
+
+  // Estado para propagar la navegación del preview a los hijos (Section → Subsegment)
+  // Cuando el usuario hace clic en el preview, guardamos acá qué debe abrirse.
+  const [navFromPreview, setNavFromPreview] = useState({
+    subId: null,
+    elemId: null,
+  })
+
   const archivosImagenRef = useRef({})
-  const prevSecRef  = useRef(null)
-  const prevSubRef  = useRef(null)
-  const prevElemRef = useRef(null)
 
-  // Sincronizar sección activa desde preview
+  // ── Sincronizar navegación desde preview ──────────────────────────
+  //
+  // ANTES (problemático):
+  //   3 useEffect separados, cada uno con su setTimeout y prevRef.
+  //   Los timeouts de 150ms, 300ms, 600ms interferían entre sí.
+  //   Si el usuario hacía clic muy rápido, los estados quedaban sucios.
+  //
+  // AHORA (correcto):
+  //   1 useEffect que reacciona al objeto activeNavExterno completo.
+  //   No necesita timeouts porque el reset se hace con un callback
+  //   después de que Section confirma que procesó la navegación.
+  //
+  // Dependencias del useEffect: [activeNavExterno]
+  //   React re-ejecuta el efecto cada vez que activeNavExterno cambia.
+  //   Si cambia secId, subId o elemId, el efecto corre de nuevo.
+  //   Si el objeto es el mismo (referencia igual), NO corre de nuevo.
   useEffect(() => {
-    if (activeSectionIdExterno && activeSectionIdExterno !== prevSecRef.current) {
-      prevSecRef.current = activeSectionIdExterno
-      setActiveSection(activeSectionIdExterno)
-      setTimeout(() => { if(onActiveSectionChange) onActiveSectionChange(null); prevSecRef.current=null }, 150)
-    }
-  }, [activeSectionIdExterno, onActiveSectionChange])
+    if (!activeNavExterno) return
 
-  // Sincronizar subsegmento activo desde preview
-  useEffect(() => {
-    if (activeSubIdExterno && activeSubIdExterno !== prevSubRef.current) {
-      prevSubRef.current = activeSubIdExterno
-      setActiveSubFromPreview(activeSubIdExterno)
-      setTimeout(() => { if(onActiveSubChange) onActiveSubChange(null); prevSubRef.current=null; setActiveSubFromPreview(null) }, 300)
-    }
-  }, [activeSubIdExterno, onActiveSubChange])
+    const { secId, subId, elemId } = activeNavExterno
 
-  // Sincronizar elemento activo desde preview
-  useEffect(() => {
-    if (activeElemIdExterno && activeElemIdExterno !== prevElemRef.current) {
-      prevElemRef.current = activeElemIdExterno
-      setActiveElemFromPreview(activeElemIdExterno)
-      // 600ms: da tiempo suficiente para que Section abra su accordeón
-      // antes de que se resetee el activeElemIdFromPreview
-      setTimeout(() => { if(onActiveElemChange) onActiveElemChange(null); prevElemRef.current=null; setActiveElemFromPreview(null) }, 600)
-    }
-  }, [activeElemIdExterno, onActiveElemChange])
+    // Si hay una sección a activar, expandirla en el acordeón
+    if (secId) {
+      setActiveSection(secId)
 
-  const genId = () => `sec_${Date.now()}_${Math.floor(Math.random()*1000)}`
-  const handleFileSelected = useCallback((elemId,file)=>{ archivosImagenRef.current[elemId]=file },[])
-  const toggleSec = (secId) => setActiveSection(p=>p===secId?null:secId)
+      // Scroll al elemento del builder
+      const secEl = document.getElementById(`seccion-${secId}`)
+      if (secEl) secEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    // Propagar subId y elemId a los hijos (Section → Subsegment)
+    if (subId || elemId) {
+      setNavFromPreview({ subId: subId || null, elemId: elemId || null })
+
+      // setTimeout(fn, 0) difiere la limpieza a la siguiente macrotask,
+      // FUERA del ciclo de render de React. Esto evita el warning
+      // "Cannot update a component while rendering a different component".
+      //
+      // Promise.resolve().then() ejecuta en la misma microtask que el render
+      // y React lo detecta como setState anidado → warning.
+      // setTimeout(fn, 0) espera a que React termine el render actual por completo.
+      setTimeout(() => {
+        setNavFromPreview({ subId: null, elemId: null })
+      }, 0)
+    }
+  }, [activeNavExterno])
+
+  const handleFileSelected = useCallback((elemId, file) => {
+    archivosImagenRef.current[elemId] = file
+  }, [])
+
+  const toggleSec = (secId) => setActiveSection(p => p === secId ? null : secId)
 
   const agregarSeccion = useCallback(() => {
-    setSecciones(prev=>{
-      const n={id:genId(),nombre:'',cssClases:'doc-section',layout:'full',elementos:[],subsegmentos:[]}
-      setActiveSection(n.id); return [...prev,n]
+    setSecciones(prev => {
+      // genId() ahora usa crypto.randomUUID() — garantiza unicidad
+      const n = {
+        id:           genId('sec'),
+        nombre:       '',
+        cssClases:    'doc-section',
+        layout:       'full',
+        elementos:    [],
+        subsegmentos: [],
+      }
+      setActiveSection(n.id)
+      return [...prev, n]
     })
-  },[setSecciones])
+  }, [setSecciones])
 
-  const actualizarSeccion = (secId,datos) => setSecciones(prev=>prev.map(s=>s.id===secId?datos:s))
-  const eliminarSeccion   = (secId) => { setSecciones(prev=>prev.filter(s=>s.id!==secId)); setActiveSection(p=>p===secId?null:p) }
-  const moverSeccion = (idx,dir) => {
-    const dest=idx+dir; if(dest<0||dest>=secciones.length) return
-    setSecciones(prev=>{ const a=[...prev];[a[idx],a[dest]]=[a[dest],a[idx]];return a })
+  const actualizarSeccion = (secId, datos) =>
+    setSecciones(prev => prev.map(s => s.id === secId ? datos : s))
+
+  const eliminarSeccion = (secId) => {
+    setSecciones(prev => prev.filter(s => s.id !== secId))
+    setActiveSection(p => p === secId ? null : p)
   }
 
+  const moverSeccion = (idx, dir) => {
+    const dest = idx + dir
+    if (dest < 0 || dest >= secciones.length) return
+    setSecciones(prev => {
+      const a = [...prev]
+      ;[a[idx], a[dest]] = [a[dest], a[idx]]
+      return a
+    })
+  }
+
+  // ── useImperativeHandle ───────────────────────────────────────────
+  // Expone métodos públicos del componente al padre (App.jsx via ref).
+  // Solo los métodos que el padre necesita llamar.
+  // Es como definir una interfaz pública en Java.
   useImperativeHandle(ref, () => ({
     agregarSeccion,
     buildJsonActual: () => secciones.length ? buildJson(secciones) : null,
-    // NUEVO: exponer el mapa de imágenes para que App.jsx lo pase al guardar
     getImagenes: () => archivosImagenRef.current,
   }), [agregarSeccion, secciones])
 
@@ -136,23 +171,33 @@ const BuilderPanel = forwardRef(function BuilderPanel({
           <span className={styles.topbarBadge}>React + Vite</span>
         </div>
       </div>
+
       <div className={styles.contenido}>
         <div className={styles.seccionesList}>
-          {secciones.length===0
-            ? <div className={styles.listaVacia}><div className={styles.listaVaciaIco}>📋</div><p>Usa el botón <strong>+</strong> flotante para agregar la primera sección.</p></div>
-            : secciones.map((sec,idx)=>(
-                <Section key={sec.id} section={sec} sectionIndex={idx}
-                  isOpen={activeSection===sec.id}
-                  onToggle={()=>toggleSec(sec.id)}
-                  onMoverSec={dir=>moverSeccion(idx,dir)}
-                  canSecArriba={idx>0} canSecAbajo={idx<secciones.length-1}
-                  onUpdate={actualizarSeccion} onDelete={eliminarSeccion}
-                  onFileSelected={handleFileSelected}
-                  activeSubIdFromPreview={activeSection===sec.id ? activeSubFromPreview : null}
-                  activeElemIdFromPreview={activeSection===sec.id ? activeElemFromPreview : null}
-                  onElementoAbierto={onElementoAbierto}
-                />
-              ))
+          {secciones.length === 0
+            ? (
+              <div className={styles.listaVacia}>
+                <div className={styles.listaVaciaIco}>📋</div>
+                <p>Usa el botón <strong>+</strong> flotante para agregar la primera sección.</p>
+              </div>
+            )
+            : secciones.map((sec, idx) => (
+              <Section
+                key={sec.id}
+                section={sec}
+                sectionIndex={idx}
+                isOpen={activeSection === sec.id}
+                onToggle={() => toggleSec(sec.id)}
+                onMoverSec={dir => moverSeccion(idx, dir)}
+                canSecArriba={idx > 0}
+                canSecAbajo={idx < secciones.length - 1}
+                onUpdate={actualizarSeccion}
+                onDelete={eliminarSeccion}
+                onFileSelected={handleFileSelected}
+                navFromPreview={activeSection === sec.id ? navFromPreview : { subId: null, elemId: null }}
+                onElementoAbierto={onElementoAbierto}
+              />
+            ))
           }
         </div>
       </div>

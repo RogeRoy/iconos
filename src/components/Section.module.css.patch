@@ -1,0 +1,20 @@
+/* Section.module.css — agrega solo el estilo nuevo .bicoBaja
+   El resto de los estilos no cambia — copia tu archivo original
+   y agrega estas reglas al final.
+   ─────────────────────────────────────────────────────────────── */
+
+/* ── NUEVO: Botón de baja lógica ─────────────────────────────────────
+   Color dorado-ámbar para diferenciarlo del rojo de "eliminar".
+   El usuario debe poder distinguir visualmente entre:
+   - ✕ rojo   = eliminar del builder (no está en la BD)
+   - ⬇ dorado = dar de baja lógica en la BD (section_status = false)
+   ─────────────────────────────────────────────────────────────────── */
+.bicoBaja {
+  background: rgba(165, 127, 44, 0.12) !important;
+  color: #a57f2c !important;
+  border-color: rgba(165, 127, 44, 0.4) !important;
+}
+.bicoBaja:hover:not(:disabled) {
+  background: rgba(165, 127, 44, 0.25) !important;
+  color: #7b5800 !important;
+}
