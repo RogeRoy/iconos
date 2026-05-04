@@ -1,8 +1,7 @@
 import axios from "axios";
 
 //  TOKEN
-const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJyb2dlciIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzkxMDk0NiwiZXhwIjoxNzc3OTM5NzQ2fQ.1hWlz6YlH4cTV_ruzZrh6WaL23mOt_CTrcZ-nogQwsI";
-
+const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJyb2dlciIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzkyNjQwNywiZXhwIjoxNzc3OTU1MjA3fQ.mQwf8N4UhnMws2D9vgyvnt-lYtn23cxI4UbhvlmGlTY";
 //  URL base
 const BASE_URL = "http://localhost:3001";
 
