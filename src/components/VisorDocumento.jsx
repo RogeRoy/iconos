@@ -23,7 +23,7 @@ import { decodeHtml }         from '../utils/htmlTokens'
 // HARDCODE DE DESARROLLO
 // ══════════════════════════════════════════════════════════
 // Token JWT — mismo que api.js. Cambiar aquí si expira.
-const TOKEN   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzUwODI0NCwiZXhwIjoxNzc3NTM3MDQ0fQ.naEZDKTjT6nvk2iLu0ZTkMbbHpNKKrtgS7S_y3YlK0k'
+const TOKEN   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJyb2dlciIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzkxMDk0NiwiZXhwIjoxNzc3OTM5NzQ2fQ.1hWlz6YlH4cTV_ruzZrh6WaL23mOt_CTrcZ-nogQwsI'
 const BASE_URL = 'http://localhost:3001'
 
 // ══════════════════════════════════════════════════════════

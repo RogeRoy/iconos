@@ -41,7 +41,7 @@ import axios from 'axios'
 //
 // IMPORTANTE: Si no tienes el archivo .env, crea uno en la raíz del proyecto
 // (junto al package.json) con el contenido de arriba.
-const TOKEN    = import.meta.env.VITE_API_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzUwMzMyNywiZXhwIjoxNzc3NTMyMTI3fQ.YF0jLrnPOmpKUp6kfKooUVcIKvFtRKA0ZN-K-TPqb7Q'
+const TOKEN    = import.meta.env.VITE_API_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJyb2dlciIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzkxMDk0NiwiZXhwIjoxNzc3OTM5NzQ2fQ.1hWlz6YlH4cTV_ruzZrh6WaL23mOt_CTrcZ-nogQwsI'
 const BASE_URL = import.meta.env.VITE_API_URL   || 'http://localhost:3001'
 
 // Aviso en consola si no están configuradas las variables de entorno

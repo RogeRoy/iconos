@@ -33,7 +33,7 @@ import { useState, useEffect }   from 'react'
 import { decodeCssFromIndex }    from '../utils/cssTokens'
 import { decodeHtml }            from '../utils/htmlTokens'
 
-const TOKEN    = import.meta.env.VITE_API_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJtaWxsYSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzUwODI0NCwiZXhwIjoxNzc3NTM3MDQ0fQ.naEZDKTjT6nvk2iLu0ZTkMbbHpNKKrtgS7S_y3YlK0k'
+const TOKEN    = import.meta.env.VITE_API_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJyb2dlciIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3NzkxMDk0NiwiZXhwIjoxNzc3OTM5NzQ2fQ.1hWlz6YlH4cTV_ruzZrh6WaL23mOt_CTrcZ-nogQwsI'
 const BASE_URL = import.meta.env.VITE_API_URL   || 'http://localhost:3001'
 
 // ── Copiar DOC_STYLES y renderSeccion y construirHtmlDocumento de VisorDocumento
